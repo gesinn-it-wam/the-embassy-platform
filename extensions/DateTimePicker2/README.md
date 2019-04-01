@@ -1,0 +1,1 @@
+JavaScript based MediaWiki Page Forms input type, that provides users with the ability to pick date and time in one go.

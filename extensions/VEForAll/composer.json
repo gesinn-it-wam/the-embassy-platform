@@ -1,0 +1,25 @@
+{
+	"name": "mediawiki/v-e-for-all",
+	"type": "mediawiki-extension",
+	"require-dev": {
+		"jakub-onderka/php-parallel-lint": "1.0.0",
+		"jakub-onderka/php-console-highlighter": "0.3.2",
+		"mediawiki/minus-x": "0.3.1",
+		"mediawiki/mediawiki-codesniffer": "23.0.0"
+	},
+	"scripts": {
+		"fix": [
+			"minus-x fix .",
+			"phpcbf"
+		],
+		"test": [
+			"parallel-lint . --exclude vendor --exclude node_modules",
+			"phpcs -p -s",
+			"minus-x check ."
+		]
+	},
+	"require": {
+		"php": ">=5.6",
+		"composer/installers": "~1.0"
+	}
+}

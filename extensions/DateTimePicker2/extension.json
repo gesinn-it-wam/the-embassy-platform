@@ -1,0 +1,95 @@
+{
+  "name": "DateTimePicker2",
+  "version": "1.1.1",
+  "author": [
+    "Sebastian Schmid (gesinn.it GmbH & Co. KG)",
+    "Felix Ashu (gesinn.it GmbH & Co. KG)"
+  ],
+  "url": "http://gitlab/mediawiki-extension/DateTimePicker2",
+  "descriptionmsg": "dtp2-desc",
+  "license-name": "GPL-2.0+",
+  "type": "other",
+  "requires": {
+    "MediaWiki": ">= 1.27",
+    "extensions": {
+      "Page Forms": ">= 4.0"
+    }
+  },
+  "AutoloadClasses": {
+    "DTP2\\DateTimePickerUtils": "includes/DateTimePickerUtils.php",
+    "DTP2\\DateTimePicker2": "includes/DateTimePicker2.php",
+    "DTP2\\DateConverter": "includes/DateConverter.php",
+    "DTP2\\Hooks": "DateTimePicker2.hooks.php"
+  },
+  "Hooks": {
+    "ParserFirstCallInit": [
+      "DTP2\\Hooks::onSetup"
+    ],
+    "ResourceLoaderTestModules":[
+      "DTP2\\Hooks::onResourceLoaderTestModules"
+    ]
+  },
+  "MessagesDirs": {
+    "DateTimePicker": [ "i18n" ]
+  },
+  "ResourceFileModulePaths": {
+    "localBasePath": "",
+    "remoteExtPath": "DateTimePicker2"
+  },
+  "ResourceModules": {
+    "ext.datetimepicker2": {
+      "scripts": [
+        "res/js/jquery-ui-timepicker-addon.js",
+        "res/js/datetimepicker2.js"
+      ],
+      "styles": [
+	    "res/css/jquery-ui.css",
+        "res/css/jquery-ui-timepicker-addon.css"
+      ],
+	  "dependencies":[
+        "jquery.ui.core",
+        "jquery.ui.datepicker",
+        "jquery.ui.slider"
+	  ],
+      "messages": [
+        "dtp2-desc",
+		"dtp2-show-picker",
+        "dtp2-closeText",
+        "dtp2-currentText",
+        "dtp2-choose-time",
+        "dtp2-time",
+        "dtp2-hour",
+        "dtp2-minute",
+        "dtp2-second",
+        "dtp2-time-zone",
+        "dtp2-dayNames-sunday",
+        "dtp2-dayNames-saturday",
+        "dtp2-dayNames-friday",
+        "dtp2-dayNames-thursday",
+        "dtp2-dayNames-wednesday",
+        "dtp2-dayNames-tuesday",
+        "dtp2-dayNames-monday",
+        "dtp2-dayNamesMin-sunday",
+        "dtp2-dayNamesMin-saturday",
+        "dtp2-dayNamesMin-friday",
+        "dtp2-dayNamesMin-thursday",
+        "dtp2-dayNamesMin-wednesday",
+        "dtp2-dayNamesMin-tuesday",
+        "dtp2-dayNamesMin-monday",
+        "dtp2-monthNames-January",
+        "dtp2-monthNames-February",
+        "dtp2-monthNames-March",
+        "dtp2-monthNames-April",
+        "dtp2-monthNames-May",
+        "dtp2-monthNames-June",
+        "dtp2-monthNames-July",
+        "dtp2-monthNames-August",
+        "dtp2-monthNames-September",
+        "dtp2-monthNames-October",
+        "dtp2-monthNames-November",
+        "dtp2-monthNames-December"
+      ]
+    }
+  },
+  "manifest_version": 1
+}

@@ -1,0 +1,63 @@
+{
+  "name": "TreeAndMenu",
+  "version": "4.4.1",
+  "author": [
+    "Aran Dunkley",
+    "Alexander Gesinn (gesinn.it GmbH & Co. KG)",
+    "Sebastian Schmid (gesinn.it GmbH & Co. KG)"
+  ],
+  "url": "http://www.mediawiki.org/wiki/Extension:TreeAndMenu",
+  "descriptionmsg": "treeandmenu-desc",
+  "license-name": "[https://www.gnu.org/licenses/gpl-2.0.html GNU General Public Licence 2.0] or later",
+  "type": "parserhook",
+  "config": {
+    "TreeAndMenuPersistIfId": false,
+    "@": "Makes trees with id attributes have persistent state"
+  },
+  "AutoloadClasses": {
+    "TreeAndMenuHooks": "TreeAndMenu.hooks.php",
+    "TAMExpand": "includes/TAM_Expand.php"
+  },
+  "ExtensionMessagesFiles": {
+    "TreeAndMenuMagic": "TreeAndMenu.i18n.magic.php"
+  },
+  "Hooks": {
+    "BeforePageDisplay": [
+      "TreeAndMenuHooks::onBeforePageDisplay"
+    ],
+    "ParserFirstCallInit": [
+      "TreeAndMenuHooks::onParserSetup"
+    ]
+  },
+  "MessagesDirs": {
+    "TreeAndMenu": "i18n"
+  },
+  "ResourceModules": {
+    "ext.fancytree": {
+      "scripts": [
+        "modules/fancytree/jquery.fancytree.js",
+        "modules/fancytree/jquery.fancytree.persist.js",
+        "modules/fancytree/jquery.fancytree.mediawiki.js",
+        "modules/fancytree/fancytree.js"
+      ],
+      "styles": "modules/fancytree/fancytree.css",
+      "dependencies": [
+        "jquery.ui.core",
+        "jquery.ui.widget",
+        "jquery.effects.blind",
+        "jquery.cookie"
+      ]
+    },
+    "ext.suckerfish": {
+      "scripts": "modules/suckerfish/suckerfish.js",
+      "styles": "modules/suckerfish/suckerfish.css",
+      "dependencies": "jquery.client"
+    }
+  },
+  "@": "The paths will be populated later as it needs be calculated",
+  "ResourceFileModulePaths": {
+    "localBasePath": "",
+    "remoteExtPath": "TreeAndMenu"
+  },
+  "manifest_version": 1
+}
