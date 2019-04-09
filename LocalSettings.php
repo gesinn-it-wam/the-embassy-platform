@@ -196,7 +196,7 @@ require_once( "$IP/extensions/ImageMap/ImageMap.php" );
 
 ## -------- GraphViz --------
 # GraphViz included via Composer
-wfLoadExtension( "GraphViz" );
+#wfLoadExtension( "GraphViz" );
 ## ======== GraphViz ========
 
 ## -------- GuidedTour --------
