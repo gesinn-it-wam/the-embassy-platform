@@ -23,18 +23,18 @@ foreach (glob("$IP/includes/semantic-core/00-*.php") as $filename) {
 ## Uncomment this to disable output compression
 # $wgDisableOutputCompression = true;
 
-$wgSitename = "wiki01";
-$wgMetaNamespace = "Wiki01";
+$wgSitename = "The Embassy of Good Science";
+$wgMetaNamespace = "The Embassy";
 
 ## The URL base path to the directory containing the wiki;
 ## defaults for all runtime URL paths are based off of this.
 ## For more information on customizing the URLs
 ## (like /w/index.php/Page_title to /wiki/Page_title) please see:
 ## https://www.mediawiki.org/wiki/Manual:Short_URL
-$wgScriptPath = "/wiki01";
+$wgScriptPath = "";
 
 ## The protocol and server name to use in fully-qualified URLs
-$wgServer = "http://localhost:8080";
+$wgServer = "http://dev-the-embassy.momkai.com/";
 
 ## The URL path to static resources (images, scripts, etc.)
 $wgResourceBasePath = $wgScriptPath;
@@ -122,13 +122,13 @@ $wgDiff3 = "/usr/bin/diff3";
 
 ## Default skin: you can change the default skin. Use the internal symbolic
 ## names, ie 'vector', 'monobook':
-$wgDefaultSkin = "vector";
+$wgDefaultSkin = "the-embassy";
 
 # Enabled skins.
 # The following skins were automatically enabled:
 wfLoadSkin( 'MonoBook' );
 wfLoadSkin( 'Timeless' );
-wfLoadSkin( 'Vector' );
+wfLoadSkin( 'TheEmbassy' );
 
 
 # End of automatically generated settings.
@@ -196,7 +196,7 @@ require_once( "$IP/extensions/ImageMap/ImageMap.php" );
 
 ## -------- GraphViz --------
 # GraphViz included via Composer
-wfLoadExtension( "GraphViz" );
+# wfLoadExtension( "GraphViz" );
 ## ======== GraphViz ========
 
 ## -------- GuidedTour --------
@@ -377,7 +377,7 @@ require_once( "$IP/extensions/VisualEditor/VisualEditor.php" );
 $wgDefaultUserOptions["visualeditor-enable"] = 1;
 $wgHiddenPrefs[] = "visualeditor-enable";
 $wgDefaultUserOptions["visualeditor-enable-experimental"] = 1;
-$wgVirtualRestConfig["modules"]["parsoid"] = ["url" => "http://localhost:8142", "domain" => "wiki01", "prefix" => "wiki01"];
+$wgVirtualRestConfig["modules"]["parsoid"] = ["url" => $wgServer.":8142", "domain" => "wiki01", "prefix" => "wiki01"];
 ## ======== VisualEditor ========
 
 ## -------- VEForAll --------
