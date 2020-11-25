@@ -5,13 +5,12 @@ framework that provides a way to declaratively define a set of parameters and ho
 should be processed. It can take such declarations together with a list of raw
 parameters and provide the processed values.
 
-The functionality provided by this extension largely comes from the [ParamProcessor library]
-(https://github.com/JeroenDeDauw/ParamProcessor).
+The functionality provided by this extension largely comes from the
+[ParamProcessor library](https://github.com/JeroenDeDauw/ParamProcessor).
 
 [![Build Status](https://travis-ci.org/JeroenDeDauw/Validator.svg?branch=master)](https://travis-ci.org/JeroenDeDauw/Validator)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/JeroenDeDauw/Validator/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/JeroenDeDauw/Validator/?branch=master)
 [![Code Coverage](https://scrutinizer-ci.com/g/JeroenDeDauw/Validator/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/JeroenDeDauw/Validator/?branch=master)
-[![Dependency Status](https://www.versioneye.com/php/mediawiki:validator/badge.png)](https://www.versioneye.com/php/mediawiki:validator)
 
 On [Packagist](https://packagist.org/packages/mediawiki/validator):
 [![Latest Stable Version](https://poser.pugx.org/mediawiki/validator/version.png)](https://packagist.org/packages/mediawiki/validator)
@@ -57,6 +56,11 @@ to support [Maps](https://github.com/JeroenDeDauw/Maps)
 and [Semantic MediaWiki](https://www.semantic-mediawiki.org/).
 
 ## Release notes
+
+### Version 2.2.2 (2020-01-14)
+
+* Translation updates
+* Installation together with DataValues Common 0.4.x is now supported
 
 ### Version 2.2.1 (2016-10-10)
 
@@ -117,9 +121,8 @@ and [Semantic MediaWiki](https://www.semantic-mediawiki.org/).
 This release is primarily a redesign of many internal APIs aimed at greater
 stability and cleaner interfaces exposed to the outside.
 
-Most code has been moved to the new [ParamProcessor library]
-(https://github.com/JeroenDeDauw/ParamProcessor), leaving the Validator extension
-as a thin MediaWiki specific wrapper.
+Most code has been moved to the new [ParamProcessor library](https://github.com/JeroenDeDauw/ParamProcessor),
+leaving the Validator extension as a thin MediaWiki specific wrapper.
 
 ##### Compatibility changes
 

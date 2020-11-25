@@ -117,11 +117,11 @@ class PropertyTableRowDifferTest extends \PHPUnit_Framework_TestCase {
 			->method( 'usesIdSubject' )
 			->will( $this->returnValue( true ) );
 
-		$propertyTable->expects( $this->once() )
+		$propertyTable->expects( $this->atLeastOnce() )
 			->method( 'isFixedPropertyTable' )
 			->will( $this->returnValue( true ) );
 
-		$propertyTable->expects( $this->once() )
+		$propertyTable->expects( $this->atLeastOnce() )
 			->method( 'getFixedProperty' )
 			->will( $this->returnValue( '_UNKNOWN_FIXED_PROPERTY' ) );
 
@@ -190,11 +190,11 @@ class PropertyTableRowDifferTest extends \PHPUnit_Framework_TestCase {
 			->method( 'usesIdSubject' )
 			->will( $this->returnValue( true ) );
 
-		$propertyTable->expects( $this->once() )
+		$propertyTable->expects( $this->atLeastOnce() )
 			->method( 'isFixedPropertyTable' )
 			->will( $this->returnValue( true ) );
 
-		$propertyTable->expects( $this->once() )
+		$propertyTable->expects( $this->atLeastOnce() )
 			->method( 'getFixedProperty' )
 			->will( $this->returnValue( '_UNKNOWN_FIXED_PROPERTY' ) );
 
@@ -203,8 +203,17 @@ class PropertyTableRowDifferTest extends \PHPUnit_Framework_TestCase {
 
 		$propertyTables = [ $propertyTable ];
 
+		$idTable = $this->getMockBuilder( '\SMW\SQLStore\EntityStore\EntityIdManager' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$idTable->expects( $this->any() )
+			->method( 'getPropertyTableHashes' )
+			->will( $this->returnValue( [ 'foo' => 'abcdef10001' ] ) );
+
 		$store = $this->getMockBuilder( '\SMW\SQLStore\SQLStore' )
-			->setMethods( [ 'getPropertyTables', 'getConnection' ] )
+			->disableOriginalConstructor()
+			->setMethods( [ 'getPropertyTables', 'getConnection', 'getObjectIds' ] )
 			->getMock();
 
 		$store->expects( $this->any() )
@@ -218,6 +227,10 @@ class PropertyTableRowDifferTest extends \PHPUnit_Framework_TestCase {
 		$store->expects( $this->any() )
 			->method( 'getConnection' )
 			->will( $this->returnValue( $connection ) );
+
+		$store->expects( $this->any() )
+			->method( 'getObjectIds' )
+			->will( $this->returnValue( $idTable ) );
 
 		$instance = new PropertyTableRowDiffer(
 			$store,

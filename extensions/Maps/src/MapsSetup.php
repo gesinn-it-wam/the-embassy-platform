@@ -6,12 +6,10 @@ namespace Maps;
 
 use DataValues\Geo\Parsers\LatLongParser;
 use Maps\DataAccess\JsonFileParser;
-use Maps\MediaWiki\Api\Geocode;
 use Maps\MediaWiki\Content\GeoJsonContent;
 use Maps\MediaWiki\Content\GeoJsonContentHandler;
 use Maps\MediaWiki\ParserHooks\CoordinatesFunction;
 use Maps\MediaWiki\ParserHooks\DisplayMapFunction;
-use Maps\MediaWiki\ParserHooks\DisplayMapRenderer;
 use Maps\MediaWiki\ParserHooks\DistanceFunction;
 use Maps\MediaWiki\ParserHooks\FindDestinationFunction;
 use Maps\MediaWiki\ParserHooks\GeocodeFunction;
@@ -51,7 +49,6 @@ class MapsSetup {
 
 	private function registerAllTheThings() {
 		$this->registerWebResources();
-		$this->registerApiModules();
 		$this->registerParserHooks();
 		$this->registerMappingServices();
 		$this->registerPermissions();
@@ -98,9 +95,7 @@ class MapsSetup {
 				$parser->setFunctionHook(
 					$hookName,
 					function ( Parser $parser, PPFrame $frame, array $arguments ) {
-						$hook = new DisplayMapFunction();
-
-						$mapHtml = $hook->getMapHtmlForKeyValueStrings(
+						$mapHtml = MapsFactory::newDefault()->getDisplayMapFunction()->getMapHtmlForKeyValueStrings(
 							$parser,
 							array_map(
 								function ( $argument ) use ( $frame ) {
@@ -132,7 +127,7 @@ class MapsSetup {
 							}
 						}
 
-						return ( new DisplayMapFunction() )->getMapHtmlForParameterList( $parser, $arguments );
+						return MapsFactory::newDefault()->getDisplayMapFunction()->getMapHtmlForParameterList( $parser, $arguments );
 					}
 				);
 			}
@@ -161,26 +156,11 @@ class MapsSetup {
 
 	private function registerMappingServices() {
 		$localBasePath = __DIR__ . '/../resources';
-		$remoteExtPath = array_slice(
-				explode( '/', str_replace( DIRECTORY_SEPARATOR, '/', __DIR__ ) ),
-				-2,
-				1
-			)[0] . '/../resources';
+		$remoteExtPath = 'Maps/resources';
 
 		$this->registerGoogleMapsModules( $localBasePath, $remoteExtPath );
 
-		MappingServices::registerService( 'googlemaps3', GoogleMapsService::class );
-
-		$googleMaps = MappingServices::getServiceInstance( 'googlemaps3' );
-		$googleMaps->addFeature( 'display_map', DisplayMapRenderer::class );
-
-
-		// Leaflet API
 		$this->registerLeafletModules( $localBasePath, $remoteExtPath );
-
-		MappingServices::registerService( 'leaflet', LeafletService::class );
-		$leafletMaps = MappingServices::getServiceInstance( 'leaflet' );
-		$leafletMaps->addFeature( 'display_map', DisplayMapRenderer::class );
 	}
 
 	private function registerGoogleMapsModules( string $localBasePath, string $remoteExtPath ) {
@@ -242,8 +222,8 @@ class MapsSetup {
 
 		$wgResourceModules['ext.maps.gm3.geoxml'] = [
 			'localBasePath' => $localBasePath . '/geoxml3',
-			'remoteExtPath' => $remoteExtPath,
-			'group' => 'ext.maps' . '/geoxml3',
+			'remoteExtPath' => $remoteExtPath . '/geoxml3',
+			'group' => 'ext.maps',
 			'targets' => [
 				'mobile',
 				'desktop'
@@ -266,6 +246,19 @@ class MapsSetup {
 			'scripts' => [
 				'googleearth-compiled.js',
 			],
+		];
+
+		$wgResourceModules['ext.sm.googlemaps3ajax'] = [
+			'localBasePath' => $localBasePath,
+			'remoteExtPath' => $remoteExtPath,
+			'group' => 'ext.maps',
+			'dependencies' => [
+				'ext.maps.googlemaps3',
+				'ext.sm.common'
+			],
+			'scripts' => [
+				'ext.sm.googlemaps3ajax.js'
+			]
 		];
 	}
 
@@ -393,6 +386,19 @@ class MapsSetup {
 				'leaflet.editor.js',
 			],
 		];
+
+		$wgResourceModules['ext.sm.leafletajax'] = [
+			'localBasePath' => $localBasePath,
+			'remoteExtPath' => $remoteExtPath,
+			'group' => 'ext.maps',
+			'dependencies' => [
+				'ext.maps.leaflet',
+				'ext.sm.common'
+			],
+			'scripts' => [
+				'ext.sm.leafletajax.js'
+			]
+		];
 	}
 
 	private function registerPermissions() {
@@ -451,10 +457,6 @@ class MapsSetup {
 	private function registerHooks() {
 		$this->mwGlobals['wgHooks']['AdminLinks'][] = 'Maps\MediaWiki\MapsHooks::addToAdminLinks';
 		$this->mwGlobals['wgHooks']['MakeGlobalVariablesScript'][] = 'Maps\MediaWiki\MapsHooks::onMakeGlobalVariablesScript';
-	}
-
-	private function registerApiModules() {
-		$this->mwGlobals['wgAPIModules']['geocode'] = Geocode::class;
 	}
 
 }

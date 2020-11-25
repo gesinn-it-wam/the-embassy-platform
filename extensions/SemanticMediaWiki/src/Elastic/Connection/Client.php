@@ -12,6 +12,7 @@ use Psr\Log\NullLogger;
 use SMW\Elastic\Exception\InvalidJSONException;
 use SMW\Elastic\Exception\ReplicationException;
 use SMW\Options;
+use SMW\Site;
 
 /**
  * Reduced interface to the Elasticsearch client class.
@@ -61,9 +62,9 @@ class Client {
 	private $options;
 
 	/**
-	 * @var boolean
+	 * @var string
 	 */
-	private $inTest = false;
+	private $wikiid;
 
 	/**
 	 * @var boolean
@@ -81,13 +82,15 @@ class Client {
 		$this->client = $client;
 		$this->lockManager = $lockManager;
 		$this->options = $options;
-		$this->inTest = defined( 'MW_PHPUNIT_TEST' );
 
 		if ( $this->options === null ) {
 			$this->options = new Options();
 		}
 
 		$this->logger = new NullLogger();
+
+		// #3938
+		$this->wikiid = strtolower( Site::id() );
 	}
 
 	/**
@@ -125,13 +128,7 @@ class Client {
 	 * @return string
 	 */
 	public function getIndexName( $type ) {
-		static $indices = [];
-
-		if ( !isset( $indices[$type] ) ) {
-			$indices[$type] = "smw-$type-" . wfWikiID();
-		}
-
-		return $indices[$type];
+		return "smw-$type-" . $this->wikiid;
 	}
 
 	/**
@@ -635,10 +632,6 @@ class Client {
 			'response' => ''
 		];
 
-		if ( $this->inTest ) {
-			$params = $params + [ 'refresh' => true ];
-		}
-
 		try {
 			$response = $this->client->bulk( $params );
 
@@ -693,12 +686,6 @@ class Client {
 		$results = [];
 		$time = -microtime( true );
 
-		// https://discuss.elastic.co/t/es-5-2-refresh-interval-doesnt-work-if-set-to-0/79248/2
-		// Make sure the replication/index lag doesn't hinder the search
-		if ( $this->inTest ) {
-			$this->client->indices()->refresh( [ 'index' => $params['index'] ] );
-		}
-
 		// ... "_source", "from", "profile", "query", "size", "sort" are not valid parameters.
 		unset( $params['body']['sort'] );
 		unset( $params['body']['_source'] );
@@ -745,12 +732,6 @@ class Client {
 
 		$time = -microtime( true );
 
-		// https://discuss.elastic.co/t/es-5-2-refresh-interval-doesnt-work-if-set-to-0/79248/2
-		// Make sure the replication/index lag doesn't hinder the search
-		if ( $this->inTest ) {
-			$this->client->indices()->refresh( [ 'index' => $params['index'] ] );
-		}
-
 		try {
 			$results = $this->client->search( $params );
 		} catch ( NoNodesAvailableException $e ) {
@@ -791,13 +772,23 @@ class Client {
 			return [];
 		}
 
-		// https://discuss.elastic.co/t/es-5-2-refresh-interval-doesnt-work-if-set-to-0/79248/2
-		// Make sure the replication/index lag doesn't hinder the search
-		if ( $this->inTest ) {
-			$this->client->indices()->refresh( [ 'index' => $params['index'] ] );
-		}
-
 		return $this->client->explain( $params );
+	}
+
+	/**
+	 * @since 3.1
+	 *
+	 * @return boolean
+	 */
+	public function hasMaintenanceLock() {
+		return $this->lockManager->hasMaintenanceLock();
+	}
+
+	/**
+	 * @since 3.1
+	 */
+	public function setMaintenanceLock() {
+		$this->lockManager->setMaintenanceLock();
 	}
 
 	/**

@@ -1,6 +1,6 @@
 <?php
 
-namespace SMW\Tests\Integration\MediaWiki\Maintenance;
+namespace SMW\Tests\Integration\Maintenance;
 
 use SMW\Tests\MwDBaseUnitTestCase;
 
@@ -30,7 +30,7 @@ class SetupStoreMaintenanceTest extends MwDBaseUnitTestCase {
 		$this->spyMessageReporter = $this->testEnvironment->getUtilityFactory()->newSpyMessageReporter();
 
 		$importRunner = $this->runnerFactory->newXmlImportRunner(
-			__DIR__ . '/Fixtures/test-import-19.7.xml'
+			__DIR__ . '/../../Fixtures/Maintenance/test-import-19.7.xml'
 		);
 
 		if ( !$importRunner->setVerbose( true )->run() ) {
@@ -75,7 +75,7 @@ class SetupStoreMaintenanceTest extends MwDBaseUnitTestCase {
 		$maintenanceRunner->run();
 
 		$this->assertContains(
-			'Database initialized completed',
+			'Database and table setup completed',
 			$this->spyMessageReporter->getMessagesAsString()
 		);
 	}

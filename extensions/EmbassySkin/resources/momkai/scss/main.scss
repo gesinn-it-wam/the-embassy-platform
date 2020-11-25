@@ -1,0 +1,25 @@
+// Add custom styles
+@import 'mixins/units'; // extracted from Foundation for Sites
+@import 'generic/paths';
+@import 'generic/webfonts';
+
+// Add bootstrap settings
+@import 'bootstrap-custom';
+
+// Import all bootstrap css for the library
+@import '~bootstrap/scss/bootstrap';
+
+// Global overwrites
+@import 'generic/global';
+@import 'generic/mediawiki_overwrites';
+
+// Add components
+@import 'components/about-card';
+@import 'components/buttons';
+@import 'components/card';
+@import 'components/columns';
+@import 'components/footer';
+@import 'components/homeblock';
+@import 'components/navigation';
+@import 'components/page-header';
+@import 'components/sidebar';

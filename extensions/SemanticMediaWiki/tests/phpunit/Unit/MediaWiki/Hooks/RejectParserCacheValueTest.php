@@ -18,8 +18,8 @@ use SMW\Tests\TestEnvironment;
 class RejectParserCacheValueTest extends \PHPUnit_Framework_TestCase {
 
 	private $testEnvironment;
-	private $dependencyLinksValidator;
-	private $entityCache;
+	private $dependencyValidator;
+	private $namespaceExaminer;
 	private $logger;
 
 	protected function setUp() {
@@ -27,7 +27,11 @@ class RejectParserCacheValueTest extends \PHPUnit_Framework_TestCase {
 
 		$this->testEnvironment = new TestEnvironment();
 
-		$this->dependencyLinksValidator = $this->getMockBuilder( '\SMW\SQLStore\QueryDependency\DependencyLinksValidator' )
+		$this->dependencyValidator = $this->getMockBuilder( '\SMW\DependencyValidator' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$this->namespaceExaminer = $this->getMockBuilder( '\SMW\NamespaceExaminer' )
 			->disableOriginalConstructor()
 			->getMock();
 
@@ -49,112 +53,39 @@ class RejectParserCacheValueTest extends \PHPUnit_Framework_TestCase {
 
 		$this->assertInstanceOf(
 			RejectParserCacheValue::class,
-			new RejectParserCacheValue( $this->dependencyLinksValidator, $this->entityCache )
+			new RejectParserCacheValue( $this->namespaceExaminer, $this->dependencyValidator )
 		);
 	}
 
-	public function testProcessOnArchaicDependencies_RejectParserCacheValue() {
+	public function testProcesCanKeepParserCache() {
 
-		$this->entityCache->expects( $this->once() )
-			->method( 'overrideSub' )
-			->with(
-				$this->stringContains( 'smw:entity:316ab10349fcb05c07001bdeb1a490c4' ),
-				$this->stringContains( 'foo-etag' ) );
-
-		$eventDispatcher = $this->getMockBuilder( '\Onoi\EventDispatcher\EventDispatcher' )
+		$title = $this->getMockBuilder( '\Title' )
 			->disableOriginalConstructor()
 			->getMock();
 
-		$eventDispatcher->expects( $this->once() )
-			->method( 'dispatch' )
-			->with( $this->equalTo( 'InvalidateResultCache' ) );
+		$title->expects( $this->any() )
+			->method( 'getNamespace' )
+			->will( $this->returnValue( NS_MAIN ) );
 
-		$subject = DIWikiPage::newFromText( 'Foo' );
+		$page = $this->getMockBuilder( '\WikiPage' )
+			->disableOriginalConstructor()
+			->getMock();
 
-		$this->dependencyLinksValidator->expects( $this->once() )
-			->method( 'hasArchaicDependencies' )
-			->with( $this->equalTo( $subject ) )
+		$page->expects( $this->once() )
+			->method( 'getTitle' )
+			->will( $this->returnValue( $title ) );
+
+		$this->namespaceExaminer->expects( $this->once() )
+			->method( 'isSemanticEnabled' )
 			->will( $this->returnValue( true ) );
 
-		$this->dependencyLinksValidator->expects( $this->once() )
-			->method( 'getCheckedDependencies' )
-			->will( $this->returnValue( [] ) );
-
-		$instance = new RejectParserCacheValue(
-			$this->dependencyLinksValidator,
-			$this->entityCache
-		);
-
-		$instance->setEventDispatcher(
-			$eventDispatcher
-		);
-
-		$instance->setLogger(
-			$this->logger
-		);
-
-		$this->assertFalse(
-			$instance->process( $subject->getTitle(), 'foo-etag' )
-		);
-	}
-
-	public function testProcessOnArchaicDependencies_RejectParserCacheValueOnDifferentEtag() {
-
-		$this->entityCache->expects( $this->once() )
-			->method( 'contains' )
+		$this->dependencyValidator->expects( $this->once() )
+			->method( 'canKeepParserCache' )
 			->will( $this->returnValue( true ) );
 
-		$this->entityCache->expects( $this->once() )
-			->method( 'fetchSub' )
-			->with( $this->stringContains( 'smw:entity:316ab10349fcb05c07001bdeb1a490c4' ) )
-			->will( $this->returnValue( false ) );
-
-		$this->entityCache->expects( $this->once() )
-			->method( 'saveSub' )
-			->with(
-				$this->stringContains( 'smw:entity:316ab10349fcb05c07001bdeb1a490c4' ),
-				$this->stringContains( 'foo-etag-2' ) );
-
-		$subject = DIWikiPage::newFromText( 'Foo' );
-
-		$this->dependencyLinksValidator->expects( $this->once() )
-			->method( 'hasArchaicDependencies' )
-			->with( $this->equalTo( $subject ) )
-			->will( $this->returnValue( false ) );
-
 		$instance = new RejectParserCacheValue(
-			$this->dependencyLinksValidator,
-			$this->entityCache
-		);
-
-		$instance->setLogger(
-			$this->logger
-		);
-
-		$this->assertFalse(
-			$instance->process( $subject->getTitle(), 'foo-etag-2' )
-		);
-	}
-
-	public function testProcessOnArchaicDependencies_KeepParserCacheValueOnUnknownDependency() {
-
-		$this->entityCache->expects( $this->once() )
-			->method( 'contains' )
-			->will( $this->returnValue( false ) );
-
-		$this->entityCache->expects( $this->never() )
-			->method( 'fetchSub' );
-
-		$subject = DIWikiPage::newFromText( 'Foo' );
-
-		$this->dependencyLinksValidator->expects( $this->once() )
-			->method( 'hasArchaicDependencies' )
-			->with( $this->equalTo( $subject ) )
-			->will( $this->returnValue( false ) );
-
-		$instance = new RejectParserCacheValue(
-			$this->dependencyLinksValidator,
-			$this->entityCache
+			$this->namespaceExaminer,
+			$this->dependencyValidator
 		);
 
 		$instance->setLogger(
@@ -162,21 +93,74 @@ class RejectParserCacheValueTest extends \PHPUnit_Framework_TestCase {
 		);
 
 		$this->assertTrue(
-			$instance->process( $subject->getTitle(), 'foo-etag-2' )
+			$instance->process( $page )
 		);
 	}
 
-	public function testProcessOnDisabledDependenciesCheck() {
+	public function testProcesCanNOTKeepParserCache() {
 
-		$subject = DIWikiPage::newFromText( 'Foo' );
+		$title = $this->getMockBuilder( '\Title' )
+			->disableOriginalConstructor()
+			->getMock();
 
-		$this->dependencyLinksValidator->expects( $this->once() )
-			->method( 'canCheckDependencies' )
+		$title->expects( $this->any() )
+			->method( 'getNamespace' )
+			->will( $this->returnValue( NS_MAIN ) );
+
+		$page = $this->getMockBuilder( '\WikiPage' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$page->expects( $this->once() )
+			->method( 'getTitle' )
+			->will( $this->returnValue( $title ) );
+
+		$this->namespaceExaminer->expects( $this->once() )
+			->method( 'isSemanticEnabled' )
+			->will( $this->returnValue( true ) );
+
+		$this->dependencyValidator->expects( $this->once() )
+			->method( 'canKeepParserCache' )
 			->will( $this->returnValue( false ) );
 
 		$instance = new RejectParserCacheValue(
-			$this->dependencyLinksValidator,
-			$this->entityCache
+			$this->namespaceExaminer,
+			$this->dependencyValidator
+		);
+
+		$instance->setLogger(
+			$this->logger
+		);
+
+		$this->assertFalse(
+			$instance->process( $page )
+		);
+	}
+
+	public function testProcessOnDisabledNamespace() {
+
+		$title = $this->getMockBuilder( '\Title' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$page = $this->getMockBuilder( '\WikiPage' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$page->expects( $this->once() )
+			->method( 'getTitle' )
+			->will( $this->returnValue( $title ) );
+
+		$this->namespaceExaminer->expects( $this->once() )
+			->method( 'isSemanticEnabled' )
+			->will( $this->returnValue( false ) );
+
+		$this->dependencyValidator->expects( $this->never() )
+			->method( 'canKeepParserCache' );
+
+		$instance = new RejectParserCacheValue(
+			$this->namespaceExaminer,
+			$this->dependencyValidator
 		);
 
 		$instance->setLogger(
@@ -184,7 +168,7 @@ class RejectParserCacheValueTest extends \PHPUnit_Framework_TestCase {
 		);
 
 		$this->assertTrue(
-			$instance->process( $subject->getTitle(), 'foo-etag-2' )
+			$instance->process( $page )
 		);
 	}
 

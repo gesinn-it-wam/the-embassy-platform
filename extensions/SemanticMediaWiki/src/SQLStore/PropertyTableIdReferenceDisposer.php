@@ -222,6 +222,12 @@ class PropertyTableIdReferenceDisposer {
 		}
 
 		$this->connection->delete(
+			SQLStore::ID_AUXILIARY_TABLE,
+			[ 'smw_id' => $id ],
+			__METHOD__
+		);
+
+		$this->connection->delete(
 			SQLStore::PROPERTY_STATISTICS_TABLE,
 			[ 'p_id' => $id ],
 			__METHOD__
@@ -265,24 +271,14 @@ class PropertyTableIdReferenceDisposer {
 		$eventHandler = EventHandler::getInstance();
 		$eventDispatcher = $eventHandler->getEventDispatcher();
 
-		$dispatchContext = $eventHandler->newDispatchContext();
-		$dispatchContext->set( 'subject', $subject );
-		$dispatchContext->set( 'context', 'PropertyTableIdReferenceDisposal' );
-
-		$eventDispatcher->dispatch(
-			'cached.prefetcher.reset',
-			$dispatchContext
-		);
-
 		$context = [
 			'context' => 'PropertyTableIdReferenceDisposal',
-			'title' => $subject->getTitle()
+			'title' => $subject->getTitle(),
+			'subject' => $subject
 		];
 
-		$eventDispatcher->dispatch(
-			'InvalidateEntityCache',
-			$context
-		);
+		$eventDispatcher->dispatch( 'InvalidateResultCache', $context );
+		$eventDispatcher->dispatch( 'InvalidateEntityCache', $context );
 	}
 
 }

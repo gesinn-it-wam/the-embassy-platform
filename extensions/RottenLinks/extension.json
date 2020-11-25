@@ -1,0 +1,59 @@
+{
+	"name": "RottenLinks",
+	"version": "1.0.8",
+	"author": "John Lewis",
+	"descriptionmsg": "rottenlinks-desc",
+	"license-name": "GPL-3.0-or-later",
+	"url": "https://github.com/miraheze/RottenLinks",
+	"type": "specialpage",
+	"SpecialPages": {
+		"RottenLinks": "SpecialRottenLinks"
+	},
+	"MessagesDirs": {
+		"RottenLinks": [
+			"i18n"
+		]
+	},
+	"AutoloadClasses": {
+		"RottenLinks": "includes/RottenLinks.php",
+		"RottenLinksHooks": "includes/RottenLinksHooks.php",
+		"RottenLinksPager": "includes/RottenLinksPager.php",
+		"SpecialRottenLinks": "includes/SpecialRottenLinks.php"
+	},
+	"Hooks": {
+		"LoadExtensionSchemaUpdates": [
+			"RottenLinksHooks::fnRottenLinksSchemaUpdates"
+		]
+	},
+	"config": {
+		"RottenLinksBadCodes": {
+			"description": "Holds a list of HTTP codes that are considered bad. (array)",
+			"public": true,
+			"value": [ "0", "400", "401", "403", "404", "405", "502", "503", "504" ]
+		},
+		"RottenLinksCurlTimeout": {
+			"description": "Sets the timeout for cURL in seconds. (integer)",
+			"public": true,
+			"value": 30
+		},
+		"RottenLinksExcludeProtocols": {
+			"description": "Holds a list of protocols that should not be checked for validity. (array)",
+			"public": true,
+			"value": [ "tel", "mailto" ]
+		},
+		"RottenLinksExcludeWebsites": {
+			"description": "List of websites to blacklist checking of response codes for. (array)",
+			"public": true,
+			"value": false
+		},
+		"RottenLinksExternalLinkTarget": {
+			"description": "Sets the external link target (_self for the current tab or _blank for a new tab). (string)",
+			"public": true,
+			"value": "_self"
+		}
+	},
+	"ConfigRegistry": {
+		"rottenlinks": "GlobalVarConfig::newInstance"
+	},
+	"manifest_version": 2
+}

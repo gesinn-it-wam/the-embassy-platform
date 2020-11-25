@@ -25,14 +25,17 @@ use Title;
 class InTextAnnotationParserTest extends \PHPUnit_Framework_TestCase {
 
 	private $semanticDataValidator;
+	private $stringValidator;
 	private $testEnvironment;
 	private $linksProcessor;
+	private $magicWordsFinder;
 
 	protected function setUp() {
 		parent::setUp();
 
 		$this->testEnvironment = new TestEnvironment();
 		$this->semanticDataValidator = $this->testEnvironment->getUtilityFactory()->newValidatorFactory()->newSemanticDataValidator();
+		$this->stringValidator = $this->testEnvironment->getUtilityFactory()->newValidatorFactory()->newStringValidator();
 
 		$store = $this->getMockBuilder( '\SMW\Store' )
 			->disableOriginalConstructor()
@@ -41,6 +44,10 @@ class InTextAnnotationParserTest extends \PHPUnit_Framework_TestCase {
 		$this->testEnvironment->registerObject( 'Store', $store );
 
 		$this->linksProcessor = new LinksProcessor();
+
+		$this->magicWordsFinder = $this->getMockBuilder( '\SMW\MediaWiki\MagicWordsFinder' )
+			->disableOriginalConstructor()
+			->getMock();
 	}
 
 	protected function tearDown() {
@@ -66,7 +73,7 @@ class InTextAnnotationParserTest extends \PHPUnit_Framework_TestCase {
 		$instance =	new InTextAnnotationParser(
 			new ParserData( $title, $parserOutput ),
 			$this->linksProcessor,
-			new MagicWordsFinder(),
+			$this->magicWordsFinder,
 			$redirectTargetFinder
 		);
 
@@ -101,7 +108,7 @@ class InTextAnnotationParserTest extends \PHPUnit_Framework_TestCase {
 			new ParserOutput()
 		);
 
-		$magicWordsFinder = new MagicWordsFinder( $parserData->getOutput() );
+		$magicWordsFinder = \SMW\ApplicationFactory::getInstance()->create('MagicWordsFinder', $parserData->getOutput() );
 
 		$instance = new InTextAnnotationParser(
 			$parserData,
@@ -135,7 +142,7 @@ class InTextAnnotationParserTest extends \PHPUnit_Framework_TestCase {
 		$instance = new InTextAnnotationParser(
 			$parserData,
 			$this->linksProcessor,
-			new MagicWordsFinder(),
+			$this->magicWordsFinder,
 			new RedirectTargetFinder()
 		);
 
@@ -153,7 +160,7 @@ class InTextAnnotationParserTest extends \PHPUnit_Framework_TestCase {
 
 		$instance->parse( $text );
 
-		$this->assertContains(
+		$this->stringValidator->assertThatStringContains(
 			$expected['resultText'],
 			$text
 		);
@@ -194,7 +201,7 @@ class InTextAnnotationParserTest extends \PHPUnit_Framework_TestCase {
 		$instance = new InTextAnnotationParser(
 			$parserData,
 			$this->linksProcessor,
-			new MagicWordsFinder(),
+			$this->magicWordsFinder,
 			$redirectTargetFinder
 		);
 
@@ -237,7 +244,7 @@ class InTextAnnotationParserTest extends \PHPUnit_Framework_TestCase {
 		$instance = new InTextAnnotationParser(
 			$parserData,
 			$this->linksProcessor,
-			new MagicWordsFinder(),
+			$this->magicWordsFinder,
 			$redirectTargetFinder
 		);
 
@@ -282,7 +289,7 @@ class InTextAnnotationParserTest extends \PHPUnit_Framework_TestCase {
 		$instance = new InTextAnnotationParser(
 			$parserData,
 			$this->linksProcessor,
-			new MagicWordsFinder(),
+			$this->magicWordsFinder,
 			$redirectTargetFinder
 		);
 
@@ -318,7 +325,7 @@ class InTextAnnotationParserTest extends \PHPUnit_Framework_TestCase {
 		$instance = new InTextAnnotationParser(
 			$parserData,
 			$this->linksProcessor,
-			new MagicWordsFinder(),
+			$this->magicWordsFinder,
 			new RedirectTargetFinder()
 		);
 
@@ -522,8 +529,6 @@ class InTextAnnotationParserTest extends \PHPUnit_Framework_TestCase {
 		#7 673
 
 		// Special:Types/Number
-		$specialTypeName = \SpecialPage::getTitleFor( 'Types', 'Number' )->getPrefixedText();
-
 		$provider[] = [
 			SMW_NS_PROPERTY,
 			[
@@ -532,7 +537,8 @@ class InTextAnnotationParserTest extends \PHPUnit_Framework_TestCase {
 			],
 			'[[has type::number]], [[has Type::page]] ',
 			[
-				'resultText'     => "[[$specialTypeName|number]], [[:Page|page]]",
+				//                     Special:Types/Number -> .*/Number
+				'resultText'     => "[[.*/Number|number]], [[:Page|page]]",
 				'propertyCount'  => 2,
 				'propertyLabels' => [ 'Has type', 'Has Type' ],
 				'propertyValues' => [ 'Number', 'Page' ]
@@ -626,12 +632,26 @@ class InTextAnnotationParserTest extends \PHPUnit_Framework_TestCase {
 			],
 			'[[Foo::@@@]] [[Bar::@@@en|Foobar]]',
 			[
-				'resultText'     => $testEnvironment->replaceNamespaceWithLocalizedText( SMW_NS_PROPERTY, '[[:Property:Foo|Foo]] [[:Property:Bar|Foobar]]' ),
+				'resultText'     => $testEnvironment->replaceNamespaceWithLocalizedText( SMW_NS_PROPERTY, '<span class="smw-property">[[:Property:Foo|Foo]]</span> <span class="smw-property">[[:Property:Bar|Foobar]]</span>' ),
 				'propertyCount'  => 0
 			]
 		];
 
-		#14 [ ... ] in-text link
+		#14 @@@|# syntax (#4037)
+		$provider[] = [
+			NS_MAIN,
+			[
+				'smwgNamespacesWithSemanticLinks' => [ NS_MAIN => true ],
+				'smwgParserFeatures' => SMW_PARSER_INL_ERROR | SMW_PARSER_STRICT
+			],
+			'[[Foo::@@@|#]] [[Bar::@@@en|#]]',
+			[
+				'resultText'     => '<span class="smw-property nolink">Foo</span> <span class="smw-property nolink">Bar</span>',
+				'propertyCount'  => 0
+			]
+		];
+
+		#15 [ ... ] in-text link
 		$provider[] = [
 			NS_MAIN,
 			[
@@ -647,7 +667,7 @@ class InTextAnnotationParserTest extends \PHPUnit_Framework_TestCase {
 			]
 		];
 
-		#15 (#2671) external [] decode use
+		#16 (#2671) external [] decode use
 		$provider[] = [
 			NS_MAIN,
 			[

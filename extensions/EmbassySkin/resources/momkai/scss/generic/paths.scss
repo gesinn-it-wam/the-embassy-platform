@@ -1,0 +1,9 @@
+// Static path
+$static-path: '/static/';
+
+// Fonts path
+$fonts-path: '#{$static-path}fonts/';
+$font-regular-path: '#{$fonts-path}regular/';
+
+// Static assets paths
+$images-static-path: '#{$static-path}images/';

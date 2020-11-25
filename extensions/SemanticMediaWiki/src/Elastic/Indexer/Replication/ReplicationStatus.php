@@ -61,6 +61,64 @@ class ReplicationStatus {
 	/**
 	 * @since 3.0
 	 *
+	 * @param integer $id
+	 *
+	 * @return boolean
+	 */
+	private function documentExistsById( $id ) {
+
+		$params = [
+			'index' => $this->connection->getIndexName( ElasticClient::TYPE_DATA ),
+			'type'  => ElasticClient::TYPE_DATA,
+			'id'    => $id,
+		];
+
+		return $this->connection->exists( $params );
+	}
+
+	/**
+	 * @since 3.0
+	 *
+	 * @param string $id
+	 *
+	 * @return []
+	 */
+	private function modification_date_associated_revision( $id ) {
+
+		$params = [
+			'index' => $this->connection->getIndexName( ElasticClient::TYPE_DATA ),
+			'type'  => ElasticClient::TYPE_DATA,
+			'id'    => $id,
+		];
+
+		if ( !$this->connection->exists( $params ) ) {
+			return [ 'modification_date' => false, 'associated_revision' => 0 ];
+		}
+
+		$pid = $this->fieldMapper->getPID( \SMW\SQLStore\EntityStore\EntityIdManager::$special_ids['_MDAT'] );
+		$field = $this->fieldMapper->getField( new DIProperty( '_MDAT' ) );
+
+		$doc = $this->connection->get( $params + [ '_source_include' => [ "$pid.$field", "subject.rev_id" ] ] );
+
+		if ( isset( $doc['_source'][$pid][$field] ) ) {
+			$date = end( $doc['_source'][$pid][$field] );
+			$modification_date = DITime::newFromJD( $date, DITime::CM_GREGORIAN, DITime::PREC_YMDT );
+		} else {
+			$modification_date = false;
+		}
+
+		if ( isset( $doc['_source']['subject']['rev_id'] ) ) {
+			$associated_revision = $doc['_source']['subject']['rev_id'];
+		} else {
+			$associated_revision = 0;
+		}
+
+		return [ 'modification_date' => $modification_date, 'associated_revision' => $associated_revision ];
+	}
+
+	/**
+	 * @since 3.0
+	 *
 	 * @param string $id
 	 *
 	 * @return boolean|DITime
@@ -78,7 +136,7 @@ class ReplicationStatus {
 			return false;
 		}
 
-		$pid = $this->fieldMapper->getPID( \SMWSql3SmwIds::$special_ids['_MDAT'] );
+		$pid = $this->fieldMapper->getPID( \SMW\SQLStore\EntityStore\EntityIdManager::$special_ids['_MDAT'] );
 		$field = $this->fieldMapper->getField( new DIProperty( '_MDAT' ) );
 
 		$doc = $this->connection->get( $params + [ '_source_include' => [ "$pid.$field" ] ] );
@@ -151,7 +209,7 @@ class ReplicationStatus {
 	 */
 	private function last_update() {
 
-		$pid = $this->fieldMapper->getPID( \SMWSql3SmwIds::$special_ids['_MDAT'] );
+		$pid = $this->fieldMapper->getPID( \SMW\SQLStore\EntityStore\EntityIdManager::$special_ids['_MDAT'] );
 		$field = $this->fieldMapper->getField( new DIProperty( '_MDAT' ) );
 
 		$params = $this->fieldMapper->exists( "$pid.$field" );

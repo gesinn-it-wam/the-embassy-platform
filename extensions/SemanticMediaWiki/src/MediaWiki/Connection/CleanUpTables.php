@@ -24,7 +24,11 @@ class CleanUpTables {
 	 */
 	public function __construct( $connection ) {
 
-		if ( !$connection instanceof Database && !$connection instanceof \DatabaseBase ) {
+		if (
+			!$connection instanceof \SMW\MediaWiki\Database &&
+			!$connection instanceof \Wikimedia\Rdbms\IDatabase &&
+			!$connection instanceof \IDatabase &&
+			!$connection instanceof \DatabaseBase ) {
 			throw new RuntimeException( "Invalid connection instance!" );
 		}
 
@@ -40,13 +44,22 @@ class CleanUpTables {
 
 		$tables = $this->connection->listTables();
 
+		// MW SQLite does some prefix meddling hence we require to remove any
+		// prefix reference
+		if ( $tablePrefix !== '' && $this->connection->getType() === 'sqlite' ) {
+			$this->connection->tablePrefix( '' );
+		}
+
 		foreach ( $tables as $table ) {
-			if ( strpos( $table, $tablePrefix ) !== false && $this->connection->tableExists( $table ) ) {
-				if ( $this->connection->getType() === 'postgres' ) {
-					$this->connection->query( "DROP TABLE IF EXISTS $table CASCADE", __METHOD__ );
-				} else {
-					$this->connection->query( "DROP TABLE $table", __METHOD__ );
-				}
+
+			if ( strpos( $table, $tablePrefix ) === false || !$this->connection->tableExists( $table ) ) {
+				continue;
+			}
+
+			if ( $this->connection->getType() === 'postgres' ) {
+				$this->connection->query( "DROP TABLE IF EXISTS $table CASCADE", __METHOD__ );
+			} else {
+				$this->connection->query( "DROP TABLE $table", __METHOD__ );
 			}
 		}
 	}

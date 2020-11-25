@@ -3,6 +3,7 @@
 namespace Maps\MediaWiki\ParserHooks;
 
 use Maps\MappingServices;
+use Maps\MapsFactory;
 use ParamProcessor\ParamDefinition;
 use ParserHook;
 
@@ -40,18 +41,15 @@ class MapsDocFunction extends ParserHook {
 	}
 
 	private function getServiceParameters( $service ) {
-		$service = MappingServices::getServiceInstance( $service );
-
-		$params = [];
-
-		$params['zoom'] = [
-			'type' => 'integer',
-			'message' => 'maps-par-zoom',
-		];
-
-		$service->addParameterInfo( $params );
-
-		return $params;
+		return array_merge(
+			[
+				'zoom' => [
+					'type' => 'integer',
+					'message' => 'maps-par-zoom',
+				]
+			],
+			MapsFactory::globalInstance()->getMappingServices()->getService( $service )->getParameterInfo()
+		);
 	}
 
 	/**

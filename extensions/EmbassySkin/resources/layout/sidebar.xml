@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<structure xmlns="https://cmln.github.io/chameleon/schema/1.0/layout.rng">
+
+    <!-- navigation -->
+    <grid class="navigation">
+        <row>
+            <component type="BurgerMenu" />
+
+            <cell class="nav-brand col-lg-2">
+                <component type="CustomLogo" addLink="yes"/>
+            </cell>
+            <cell class="nav col-lg-7">
+                <component type="MainMenu" />
+            </cell>
+            <cell class="nav-search-profile col-lg-3">
+                <component type="SearchBar" position="right"></component>
+                <component type="MobileSearch" position="right"></component>
+                <component type="CustomLogin" position="right"></component>
+            </cell>
+        </row>
+    </grid>
+
+    <grid>
+        <row class="no-gutters">
+            <component type="ContentWithSideBar" />
+        </row>
+    </grid>
+
+    <!-- Content Component -->
+    <component type="Footer"/>
+
+</structure>

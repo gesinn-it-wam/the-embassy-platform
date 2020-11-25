@@ -42,7 +42,8 @@ $phpUnitEnvironment->writeLn( "MediaWiki:", $phpUnitEnvironment->getVersion( 'mw
 $phpUnitEnvironment->writeLn( "Site language:", $phpUnitEnvironment->getSiteLanguageCode() );
 $phpUnitEnvironment->writeNewLn( "Execution time:", $phpUnitEnvironment->executionTime() );
 $phpUnitEnvironment->writeLn( "Debug logs:", ( $phpUnitEnvironment->enabledDebugLogs() ? 'Enabled' : 'Disabled' ) );
-$phpUnitEnvironment->writeLn( "Xdebug:", ( ( $version = $phpUnitEnvironment->getXdebugInfo() ) ? $version : 'Disabled (or not installed)' ) );
+$phpUnitEnvironment->writeNewLn( "Xdebug:", ( ( $version = $phpUnitEnvironment->getXdebugInfo() ) ? $version : 'Disabled (or not installed)' ) );
+$phpUnitEnvironment->writeLn( "Intl/ICU:", ( ( $intl = $phpUnitEnvironment->getIntlInfo() ) ? $intl : 'Disabled (or not installed)' ) );
 $phpUnitEnvironment->writeNewLn();
 
 unset( $phpUnitEnvironment );
@@ -56,19 +57,24 @@ unset( $phpUnitEnvironment );
 $autoloader = require $path;
 
 $autoloader->addPsr4( 'SMW\\Tests\\Utils\\', __DIR__ . '/phpunit/Utils' );
+$autoloader->addPsr4( 'SMW\\Tests\\Fixtures\\', __DIR__ . '/phpunit/Fixtures' );
 
 $autoloader->addClassMap( [
-	'SMW\Tests\TestEnvironment'             => __DIR__ . '/phpunit/TestEnvironment.php',
-	'SMW\Tests\TestConfig'                  => __DIR__ . '/phpunit/TestConfig.php',
-	'SMW\Tests\PHPUnitCompat'               => __DIR__ . '/phpunit/PHPUnitCompat.php',
-	'SMW\Tests\DatabaseTestCase'            => __DIR__ . '/phpunit/DatabaseTestCase.php',
-	'SMW\Tests\JsonTestCaseScriptRunner'    => __DIR__ . '/phpunit/JsonTestCaseScriptRunner.php',
-	'SMW\Tests\JsonTestCaseFileHandler'     => __DIR__ . '/phpunit/JsonTestCaseFileHandler.php',
-	'SMW\Tests\JsonTestCaseContentHandler'  => __DIR__ . '/phpunit/JsonTestCaseContentHandler.php',
-	'SMW\Test\QueryPrinterTestCase'         => __DIR__ . '/phpunit/QueryPrinterTestCase.php',
-	'SMW\Test\QueryPrinterRegistryTestCase' => __DIR__ . '/phpunit/QueryPrinterRegistryTestCase.php',
+	'SMW\Tests\TestEnvironment'                     => __DIR__ . '/phpunit/TestEnvironment.php',
+	'SMW\Tests\TestConfig'                          => __DIR__ . '/phpunit/TestConfig.php',
+	'SMW\Tests\PHPUnitCompat'                       => __DIR__ . '/phpunit/PHPUnitCompat.php',
+	'SMW\Tests\DatabaseTestCase'                    => __DIR__ . '/phpunit/DatabaseTestCase.php',
+	'SMW\Tests\JsonTestCaseScriptRunner'            => __DIR__ . '/phpunit/JsonTestCaseScriptRunner.php',
+	'SMW\Tests\LightweightJsonTestCaseScriptRunner' => __DIR__ . '/phpunit/LightweightJsonTestCaseScriptRunner.php',
+	'SMW\Tests\ExtendedJsonTestCaseScriptRunner'    => __DIR__ . '/phpunit/ExtendedJsonTestCaseScriptRunner.php',
+	'SMW\Test\QueryPrinterTestCase'                 => __DIR__ . '/phpunit/QueryPrinterTestCase.php',
+	'SMW\Test\QueryPrinterRegistryTestCase'         => __DIR__ . '/phpunit/QueryPrinterRegistryTestCase.php',
 	'SMW\Tests\SPARQLStore\RepositoryConnectors\ElementaryRepositoryConnectorTest' => __DIR__ . '/phpunit/Unit/SPARQLStore/RepositoryConnectors/ElementaryRepositoryConnectorTest.php',
 ] );
+
+// 3.1
+class_alias( '\SMW\Tests\Utils\JSONScript\JsonTestCaseFileHandler', 'SMW\Tests\JsonTestCaseFileHandler' );
+class_alias( '\SMW\Tests\Utils\JSONScript\JsonTestCaseContentHandler', 'SMW\Tests\JsonTestCaseContentHandler' );
 
 // 3.0
 class_alias( '\SMW\Tests\DatabaseTestCase', '\SMW\Tests\MwDBaseUnitTestCase' );

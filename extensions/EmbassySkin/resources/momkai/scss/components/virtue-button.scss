@@ -1,0 +1,12 @@
+.Virt2ue-button {
+  position: relative;
+  font-family: $te-font-bold;
+  font-size: rem-calc(20);
+  color: $te-black;
+  background-color: $te-boticelli;
+
+  &:hover {
+    color: initial;
+    text-decoration: underline !important;
+  }
+}

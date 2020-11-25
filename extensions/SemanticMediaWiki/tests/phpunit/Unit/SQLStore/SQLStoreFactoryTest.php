@@ -39,6 +39,16 @@ class SQLStoreFactoryTest extends \PHPUnit_Framework_TestCase {
 		);
 	}
 
+	public function testCanConstructUpdater() {
+
+		$instance = new SQLStoreFactory( new SMWSQLStore3() );
+
+		$this->assertInstanceOf(
+			'\SMW\SQLStore\SQLStoreUpdater',
+			$instance->newUpdater()
+		);
+	}
+
 	public function testNewSlaveQueryEngineReturnType() {
 
 		$instance = new SQLStoreFactory( new SMWSQLStore3() );
@@ -85,7 +95,12 @@ class SQLStoreFactoryTest extends \PHPUnit_Framework_TestCase {
 
 		$this->assertInstanceOf(
 			'SMWSql3SmwIds',
-			$instance->newEntityTable()
+			$instance->newEntityIdManager()
+		);
+
+		$this->assertInstanceOf(
+			'\SMW\SQLStore\EntityStore\EntityIdManager',
+			$instance->newEntityIdManager()
 		);
 	}
 
@@ -198,10 +213,6 @@ class SQLStoreFactoryTest extends \PHPUnit_Framework_TestCase {
 			->getMock();
 
 		$store->expects( $this->once() )
-			->method( 'getOptions' )
-			->will( $this->returnValue( new Options() ) );
-
-		$store->expects( $this->once() )
 			->method( 'getConnection' )
 			->will( $this->returnValue( $connection ) );
 
@@ -269,7 +280,7 @@ class SQLStoreFactoryTest extends \PHPUnit_Framework_TestCase {
 			'entity.id' => '',
 			'entity.sort' => '',
 			'entity.lookup' => '',
-			'table.hash' => ''
+			'propertytable.hash' => ''
 		];
 
 		$this->assertInstanceOf(
@@ -302,6 +313,28 @@ class SQLStoreFactoryTest extends \PHPUnit_Framework_TestCase {
 		);
 	}
 
+	public function testCanConstructSequenceMapFinder() {
+
+		$connection = $this->getMockBuilder( '\SMW\MediaWiki\Database' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$this->store->expects( $this->once() )
+			->method( 'getConnection' )
+			->will( $this->returnValue( $connection ) );
+
+		$idCacheManager = $this->getMockBuilder( '\SMW\SQLStore\EntityStore\IdCacheManager' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$instance = new SQLStoreFactory( $this->store );
+
+		$this->assertInstanceOf(
+			'\SMW\SQLStore\EntityStore\SequenceMapFinder',
+			$instance->newSequenceMapFinder( $idCacheManager )
+		);
+	}
+
 	public function testCanConstructCacheWarmer() {
 
 		$idCacheManager = $this->getMockBuilder( '\SMW\SQLStore\EntityStore\IdCacheManager' )
@@ -326,13 +359,13 @@ class SQLStoreFactoryTest extends \PHPUnit_Framework_TestCase {
 		);
 	}
 
-	public function testCanConstructUniquenessLookup() {
+	public function testCanConstructDuplicateFinder() {
 
 		$instance = new SQLStoreFactory( $this->store );
 
 		$this->assertInstanceOf(
-			'\SMW\SQLStore\EntityStore\UniquenessLookup',
-			$instance->newUniquenessLookup()
+			'\SMW\SQLStore\EntityStore\DuplicateFinder',
+			$instance->newDuplicateFinder()
 		);
 	}
 
@@ -420,13 +453,13 @@ class SQLStoreFactoryTest extends \PHPUnit_Framework_TestCase {
 		);
 	}
 
-	public function testCanConstructEntityValueUniquenessConstraintChecker() {
+	public function testCanConstructEntityUniquenessLookup() {
 
 		$instance = new SQLStoreFactory( $this->store );
 
 		$this->assertInstanceOf(
-			'\SMW\SQLStore\EntityValueUniquenessConstraintChecker',
-			$instance->newEntityValueUniquenessConstraintChecker()
+			'\SMW\SQLStore\Lookup\EntityUniquenessLookup',
+			$instance->newEntityUniquenessLookup()
 		);
 	}
 
@@ -468,6 +501,28 @@ class SQLStoreFactoryTest extends \PHPUnit_Framework_TestCase {
 		);
 	}
 
+	public function testCanConstructPropertyTableHashes() {
+
+		$connection = $this->getMockBuilder( '\SMW\MediaWiki\Database' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$this->store->expects( $this->once() )
+			->method( 'getConnection' )
+			->will( $this->returnValue( $connection ) );
+
+		$idCacheManager = $this->getMockBuilder( '\SMW\SQLStore\EntityStore\IdCacheManager' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$instance = new SQLStoreFactory( $this->store );
+
+		$this->assertInstanceOf(
+			'\SMW\SQLStore\PropertyTable\PropertyTableHashes',
+			$instance->newPropertyTableHashes( $idCacheManager )
+		);
+	}
+
 	public function testCanConstructMissingRedirectLookup() {
 
 		$instance = new SQLStoreFactory( $this->store );
@@ -485,6 +540,16 @@ class SQLStoreFactoryTest extends \PHPUnit_Framework_TestCase {
 		$this->assertInstanceOf(
 			'\SMW\SQLStore\Lookup\MonolingualTextLookup',
 			$instance->newMonolingualTextLookup()
+		);
+	}
+
+	public function testCanConstructDisplayTitleLookup() {
+
+		$instance = new SQLStoreFactory( $this->store );
+
+		$this->assertInstanceOf(
+			'\SMW\SQLStore\Lookup\DisplayTitleLookup',
+			$instance->newDisplayTitleLookup()
 		);
 	}
 
@@ -513,6 +578,26 @@ class SQLStoreFactoryTest extends \PHPUnit_Framework_TestCase {
 		$this->assertInstanceOf(
 			'\SMW\SQLStore\PropertyTypeFinder',
 			$instance->newPropertyTypeFinder()
+		);
+	}
+
+	public function testCanConstructTableStatisticsLookup() {
+
+		$instance = new SQLStoreFactory( $this->store );
+
+		$this->assertInstanceOf(
+			'\SMW\SQLStore\Lookup\TableStatisticsLookup',
+			$instance->newTableStatisticsLookup()
+		);
+	}
+
+	public function testCanConstructErrorLookup() {
+
+		$instance = new SQLStoreFactory( $this->store );
+
+		$this->assertInstanceOf(
+			'\SMW\SQLStore\Lookup\ErrorLookup',
+			$instance->newErrorLookup()
 		);
 	}
 

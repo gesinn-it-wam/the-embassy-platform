@@ -19,14 +19,19 @@ use SMW\SQLStore\EntityStore\PrefetchItemLookup;
 use SMW\SQLStore\EntityStore\IdCacheManager;
 use SMW\SQLStore\EntityStore\CacheWarmer;
 use SMW\SQLStore\EntityStore\IdEntityFinder;
+use SMW\SQLStore\EntityStore\EntityIdFinder;
+use SMW\SQLStore\EntityStore\SequenceMapFinder;
 use SMW\SQLStore\EntityStore\IdChanger;
-use SMW\SQLStore\EntityStore\UniquenessLookup;
+use SMW\SQLStore\EntityStore\DuplicateFinder;
 use SMW\SQLStore\EntityStore\EntityLookup;
 use SMW\SQLStore\EntityStore\SemanticDataLookup;
 use SMW\SQLStore\EntityStore\SubobjectListFinder;
 use SMW\SQLStore\EntityStore\TraversalPropertyLookup;
 use SMW\SQLStore\EntityStore\PropertySubjectsLookup;
 use SMW\SQLStore\EntityStore\PropertiesLookup;
+use SMW\SQLStore\EntityStore\PrefetchCache;
+use SMW\SQLStore\EntityStore\EntityIdManager;
+use SMW\SQLStore\PropertyTable\PropertyTableHashes;
 use SMW\SQLStore\Lookup\CachedListLookup;
 use SMW\SQLStore\Lookup\ListLookup;
 use SMW\SQLStore\Lookup\PropertyUsageListLookup;
@@ -37,19 +42,20 @@ use SMW\SQLStore\Lookup\UsageStatisticsListLookup;
 use SMW\SQLStore\Lookup\ProximityPropertyValueLookup;
 use SMW\SQLStore\Lookup\MissingRedirectLookup;
 use SMW\SQLStore\Lookup\MonolingualTextLookup;
+use SMW\SQLStore\Lookup\DisplayTitleLookup;
+use SMW\SQLStore\Lookup\ErrorLookup;
+use SMW\SQLStore\Lookup\EntityUniquenessLookup;
+use SMW\SQLStore\Lookup\TableStatisticsLookup;
+use SMW\SQLStore\Lookup\SingleEntityQueryLookup;
 use SMW\SQLStore\TableBuilder\TableBuilder;
-use SMW\SQLStore\TableBuilder\Examiner\HashField;
-use SMW\SQLStore\TableBuilder\Examiner\FixedProperties;
-use SMW\SQLStore\TableBuilder\Examiner\TouchedField;
-use SMW\SQLStore\TableBuilder\Examiner\IdBorder;
+use SMW\SQLStore\TableBuilder\TableSchemaManager;
+use SMW\SQLStore\TableBuilder\TableBuildExaminer;
+use SMW\SQLStore\TableBuilder\TableBuildExaminerFactory;
 use SMW\SQLStore\Rebuilder\EntityValidator;
 use SMW\SQLStore\Rebuilder\Rebuilder;
 use SMW\Utils\CircularReferenceGuard;
 use SMWRequestOptions as RequestOptions;
-use SMWSql3SmwIds as EntityIdManager;
 use SMW\Services\ServicesContainer;
-use SMW\RequestData;
-use SMWSQLStore3;
 
 /**
  * @license GNU GPL v2+
@@ -61,7 +67,7 @@ use SMWSQLStore3;
 class SQLStoreFactory {
 
 	/**
-	 * @var SMWSQLStore3
+	 * @var SQLStore
 	 */
 	private $store;
 
@@ -78,10 +84,10 @@ class SQLStoreFactory {
 	/**
 	 * @since 2.2
 	 *
-	 * @param SMWSQLStore3 $store
+	 * @param SQLStore $store
 	 * @param MessageReporter|null $messageReporter
 	 */
-	public function __construct( SMWSQLStore3 $store, MessageReporter $messageReporter = null ) {
+	public function __construct( SQLStore $store, MessageReporter $messageReporter = null ) {
 		$this->store = $store;
 		$this->messageReporter = $messageReporter;
 
@@ -90,6 +96,15 @@ class SQLStoreFactory {
 		}
 
 		$this->queryEngineFactory = new QueryEngineFactory( $store );
+	}
+
+	/**
+	 * @since 3.1
+	 *
+	 * @return SQLStoreUpdater
+	 */
+	public function newUpdater() {
+		return new SQLStoreUpdater( $this->store, $this );
 	}
 
 	/**
@@ -115,7 +130,7 @@ class SQLStoreFactory {
 	 *
 	 * @return EntityIdManager
 	 */
-	public function newEntityTable() {
+	public function newEntityIdManager() {
 		return new EntityIdManager( $this->store, $this );
 	}
 
@@ -337,8 +352,7 @@ class SQLStoreFactory {
 	 * @return EntityLookup
 	 */
 	public function newEntityLookup() {
-		$entityLookup = new EntityLookup( $this->store );
-		return $entityLookup;
+		return new EntityLookup( $this->store, $this );
 	}
 
 	/**
@@ -384,6 +398,23 @@ class SQLStoreFactory {
 	}
 
 	/**
+	 * @since 3.1
+	 *
+	 * @param IdCacheManager $idCacheManager
+	 *
+	 * @return PropertyTableHashes
+	 */
+	public function newPropertyTableHashes( IdCacheManager $idCacheManager ) {
+
+		$propertyTableHashes = new PropertyTableHashes(
+			$this->store->getConnection( 'mw.db' ),
+			$idCacheManager
+		);
+
+		return $propertyTableHashes;
+	}
+
+	/**
 	 * @since 2.5
 	 *
 	 * @return Installer
@@ -400,12 +431,9 @@ class SQLStoreFactory {
 			$this->messageReporter
 		);
 
-		$tableIntegrityExaminer = new TableIntegrityExaminer(
+		$tableBuildExaminer = new TableBuildExaminer(
 			$this->store,
-			new HashField( $this->store ),
-			new FixedProperties( $this->store ),
-			new TouchedField( $this->store ),
-			new IdBorder( $this->store )
+			new TableBuildExaminerFactory()
 		);
 
 		$tableSchemaManager = new TableSchemaManager(
@@ -426,22 +454,11 @@ class SQLStoreFactory {
 		$installer = new Installer(
 			$tableSchemaManager,
 			$tableBuilder,
-			$tableIntegrityExaminer
+			$tableBuildExaminer
 		);
 
 		$installer->setMessageReporter(
 			$this->messageReporter
-		);
-
-		$installer->setOptions(
-			$this->store->getOptions()->filter(
-				[
-					Installer::OPT_TABLE_OPTIMIZE,
-					Installer::OPT_IMPORT,
-					Installer::OPT_SCHEMA_UPDATE,
-					Installer::OPT_SUPPLEMENT_JOBS
-				]
-			)
 		);
 
 		return $installer;
@@ -598,14 +615,60 @@ class SQLStoreFactory {
 	 * @since 3.1
 	 *
 	 * @param IdCacheManager $idCacheManager
+	 * @param PropertyTableHashes|null $propertyTableHashes
+	 *
+	 * @return IdEntityFinder
+	 */
+	public function newEntityIdFinder( IdCacheManager $idCacheManager, PropertyTableHashes $propertyTableHashes = null ) {
+
+		if ( $propertyTableHashes === null ) {
+			$propertyTableHashes = $this->newPropertyTableHashes( $idCacheManager );
+		}
+
+		$entityIdFinder = new EntityIdFinder(
+			$this->store->getConnection( 'mw.db' ),
+			$propertyTableHashes,
+			$idCacheManager
+		);
+
+		return $entityIdFinder;
+	}
+
+	/**
+	 * @since 3.1
+	 *
+	 * @param IdCacheManager $idCacheManager
+	 *
+	 * @return SequenceMapFinder
+	 */
+	public function newSequenceMapFinder( IdCacheManager $idCacheManager ) {
+
+		$sequenceMapFinder = new SequenceMapFinder(
+			$this->store->getConnection( 'mw.db'),
+			$idCacheManager
+		);
+
+		return $sequenceMapFinder;
+	}
+
+	/**
+	 * @since 3.1
+	 *
+	 * @param IdCacheManager $idCacheManager
 	 *
 	 * @return CacheWarmer
 	 */
 	public function newCacheWarmer( IdCacheManager $idCacheManager ) {
 
+		$applicationFactory = ApplicationFactory::getInstance();
+
 		$cacheWarmer = new CacheWarmer(
 			$this->store,
 			$idCacheManager
+		);
+
+		$cacheWarmer->setDisplayTitleFinder(
+			$applicationFactory->singleton( 'DisplayTitleFinder', $this->store )
 		);
 
 		return $cacheWarmer;
@@ -626,18 +689,41 @@ class SQLStoreFactory {
 	}
 
 	/**
+	 * @since 3.1
+	 *
+	 * @return RedirectUpdater
+	 */
+	public function newRedirectUpdater() {
+
+		$settings = ApplicationFactory::getInstance()->getSettings();
+
+		$redirectUpdater = new RedirectUpdater(
+			$this->store,
+			$this->newIdChanger(),
+			$this->newTableFieldUpdater(),
+			$this->newPropertyStatisticsStore()
+		);
+
+		$redirectUpdater->setEqualitySupportFlag(
+			$settings->get( 'smwgQEqualitySupport' )
+		);
+
+		return $redirectUpdater;
+	}
+
+	/**
 	 * @since 3.0
 	 *
-	 * @return UniquenessLookup
+	 * @return DuplicateFinder
 	 */
-	public function newUniquenessLookup() {
+	public function newDuplicateFinder() {
 
-		$uniquenessLookup = new UniquenessLookup(
+		$duplicateFinder = new DuplicateFinder(
 			$this->store,
 			$this->getIteratorFactory()
 		);
 
-		return $uniquenessLookup;
+		return $duplicateFinder;
 	}
 
 	/**
@@ -712,6 +798,10 @@ class SQLStoreFactory {
 			$this->store
 		);
 
+		$redirectStore->setCommandLineMode(
+			Site::isCommandLineMode()
+		);
+
 		return $redirectStore;
 	}
 
@@ -755,10 +845,10 @@ class SQLStoreFactory {
 	/**
 	 * @since 3.0
 	 *
-	 * @return EntityValueUniquenessConstraintChecker
+	 * @return EntityUniquenessLookup
 	 */
-	public function newEntityValueUniquenessConstraintChecker() {
-		return new EntityValueUniquenessConstraintChecker(
+	public function newEntityUniquenessLookup() {
+		return new EntityUniquenessLookup(
 			$this->store,
 			$this->getIteratorFactory()
 		);
@@ -815,12 +905,34 @@ class SQLStoreFactory {
 	/**
 	 * @since 3.1
 	 *
+	 * @return DisplayTitleLookup
+	 */
+	public function newDisplayTitleLookup() {
+		return new DisplayTitleLookup( $this->store );
+	}
+
+	/**
+	 * @since 3.1
+	 *
 	 * @return PrefetchItemLookup
 	 */
 	public function newPrefetchItemLookup() {
 		return new PrefetchItemLookup(
 			$this->store,
-			$this->newSemanticDataLookup()
+			$this->newSemanticDataLookup(),
+			$this->newPropertySubjectsLookup()
+		);
+	}
+
+	/**
+	 * @since 3.1
+	 *
+	 * @return PrefetchCache
+	 */
+	public function newPrefetchCache() {
+		return new PrefetchCache(
+			$this->store,
+			$this->newPrefetchItemLookup()
 		);
 	}
 
@@ -831,6 +943,48 @@ class SQLStoreFactory {
 	 */
 	public function newPropertyTypeFinder() {
 		return new PropertyTypeFinder( $this->store->getConnection( 'mw.db' ) );
+	}
+
+	/**
+	 * @since 3.1
+	 *
+	 * @return TableStatisticsLookup
+	 */
+	public function newTableStatisticsLookup() {
+
+		$tableStatisticsLookup = new TableStatisticsLookup(
+			$this->store
+		);
+
+		return $tableStatisticsLookup;
+	}
+
+	/**
+	 * @since 3.1
+	 *
+	 * @return SingleEntityQueryLookup
+	 */
+	public function newSingleEntityQueryLookup() {
+
+		$singleEntityQueryLookup = new SingleEntityQueryLookup(
+			$this->store
+		);
+
+		return $singleEntityQueryLookup;
+	}
+
+	/**
+	 * @since 3.1
+	 *
+	 * @return ErrorLookup
+	 */
+	public function newErrorLookup() {
+
+		$errorLookup = new ErrorLookup(
+			$this->store
+		);
+
+		return $errorLookup;
 	}
 
 	/**
@@ -846,9 +1000,9 @@ class SQLStoreFactory {
 					'_service' => [ $this, 'newProximityPropertyValueLookup' ],
 					'_type'    => ProximityPropertyValueLookup::class
 				],
-				'EntityValueUniquenessConstraintChecker' => [
-					'_service' => [ $this, 'newEntityValueUniquenessConstraintChecker' ],
-					'_type'    => EntityValueUniquenessConstraintChecker::class
+				'EntityUniquenessLookup' => [
+					'_service' => [ $this, 'newEntityUniquenessLookup' ],
+					'_type'    => EntityUniquenessLookup::class
 				],
 				'PropertyTableIdReferenceDisposer' => [
 					'_service' => [ $this, 'newPropertyTableIdReferenceDisposer' ],
@@ -870,6 +1024,10 @@ class SQLStoreFactory {
 					'_service' => [ $this, 'newMonolingualTextLookup' ],
 					'_type'    => MonolingualTextLookup::class
 				],
+				'DisplayTitleLookup' => [
+					'_service' => [ $this, 'newDisplayTitleLookup' ],
+					'_type'    => DisplayTitleLookup::class
+				],
 				'PropertyTypeFinder' => [
 					'_service' => [ $this, 'newPropertyTypeFinder' ],
 					'_type'    => PropertyTypeFinder::class
@@ -878,10 +1036,26 @@ class SQLStoreFactory {
 					static $singleton;
 					return $singleton = $singleton === null ? $this->newPropertyTableIdReferenceFinder() : $singleton;
 				},
+				'PrefetchCache' => [
+					'_service' => [ $this, 'newPrefetchCache' ],
+					'_type'    => PrefetchCache::class
+				],
 				'PrefetchItemLookup' => [
 					'_service' => [ $this, 'newPrefetchItemLookup' ],
 					'_type'    => PrefetchItemLookup::class
-				]
+				],
+				'ErrorLookup' => [
+					'_service' => [ $this, 'newErrorLookup' ],
+					'_type'    => ErrorLookup::class
+				],
+				'TableStatisticsLookup' => [
+					'_service' => [ $this, 'newTableStatisticsLookup' ],
+					'_type'    => TableStatisticsLookup::class
+				],
+				'SingleEntityQueryLookup' => [
+					'_service' => [ $this, 'newSingleEntityQueryLookup' ],
+					'_type'    => SingleEntityQueryLookup::class
+				],
 			]
 		);
 

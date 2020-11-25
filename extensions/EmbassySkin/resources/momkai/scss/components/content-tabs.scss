@@ -1,0 +1,94 @@
+#gesinn-custom-tabs {
+  font-family: $te-font-bold;
+  border-bottom: 2px solid $te-boticelli;
+  padding-bottom: 10px;
+  font-size: rem-calc(17);
+  line-height: unitless-calc(31, 17);
+
+  @include media-breakpoint-up(md) {
+    display: grid;
+  }
+  @include media-breakpoint-up(lg) {
+    font-size: rem-calc(18);
+    line-height: unitless-calc(31, 18);
+  }
+
+  grid-template-rows: 1fr;
+  grid-template-columns: repeat(12, 1fr);
+  grid-row-gap: 0;
+  grid-column-gap: 24px;
+
+  body[class*="page-Instruction_"] &,
+  body[class*="mw-special-FormEdit"] & {
+    display: block;
+  }
+
+  body[class*="page-Guide"] & .active {
+    border-bottom-color: $te-homepage-background;
+  }
+
+}
+
+
+.gesinn-custom-tabs-container {
+  grid-column-start: 1;
+  grid-column-end: 10;
+  @include media-breakpoint-up(md) {
+    grid-column-start: 2;
+
+  }
+  @include media-breakpoint-up(lg) {
+    grid-column-start: 3;
+    margin-left: 0;
+  }
+
+}
+
+.g-tab-info {
+  display: none;
+  float: left;
+  margin-right: 35px;
+  color: $te-blue;
+
+  @include media-breakpoint-up(lg) {
+    display: block;
+  }
+}
+
+.g-tablinks {
+  padding: 20px 40px 17px;
+  color: $te-black;
+  transition: none !important;
+
+  @include media-breakpoint-up(lg) {
+    padding-bottom: 16px;
+  }
+
+  border: 2px solid transparent;
+
+  &.active {
+    border-color: $te-boticelli;
+    border-bottom-color: $te-white;
+  }
+
+  &.disabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  &:hover {
+    color: $te-blue;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+}
+
+#data-tab-content-trainee {
+  display: block;
+}
+
+// Exeptions on the form guide
+#form-Guide #gesinn-custom-tabs {
+  display: block;
+}

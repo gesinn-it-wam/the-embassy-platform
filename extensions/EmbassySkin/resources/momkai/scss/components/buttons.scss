@@ -1,0 +1,333 @@
+// Add all variations for buttons
+.formbutton-edit,
+.formbutton-open,
+.formbutton-save,
+.formbutton-preview {
+  display: flex;
+  align-items: center;
+
+  & > a {
+    position: relative;
+    display: inline-block;
+    height: 44px;
+    padding: 10px 20px;
+    font-family: $te-font-bold;
+    font-size: rem-calc(16);
+    text-transform: lowercase;
+    color: $te-black;
+    background-color: $te-lightblue;
+    transition: background-color 150ms ease-in-out;
+    width: 100%;
+    text-align: center;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 17'%3E%3Cpath fill='%23000' fill-rule='evenodd' d='M4.6547 16.5159H0v-4.6547c0-.4257.169-.8342.4702-1.1354l7.7282-7.7282 2.8813 2.8817-.9989.9991-1.7464-1.7461L1.74 11.727a.459.459 0 00-.1344.3245v3.0882h2.6202a.4585.4585 0 00.3243-.1344l9.3652-9.3558a.4585.4585 0 000-.6489l-3.8652-3.8655L11.1852 0l4.19 4.1896c.6271.627.6271 1.6436 0 2.2707l-9.5851 9.5854a1.6057 1.6057 0 01-1.1354.4702'/%3E%3C/svg%3E");
+    background-position: 30% center;
+    background-size: 16px 17px;
+    background-repeat: no-repeat;
+
+    &:hover {
+      text-decoration: none;
+      background-color: $te-sunfloweryellow;
+
+      &::before,
+      &::after {
+        background-color: $te-sunfloweryellow;
+      }
+    }
+  }
+
+  .content & {
+    .smw-edit-dropdown {
+      margin-left: 5px;
+    }
+
+    & > a {
+      width: auto;
+      padding-left: 50px;
+      background-position: 25px center;
+      padding-right: 35px;
+    }
+
+    margin: -10px 0 40px;
+    @include media-breakpoint-up(lg) {
+      display: none;
+    }
+  }
+
+}
+
+.formbutton-save {
+  a {
+    background-color: $te-sunfloweryellow;
+
+    &:hover {
+      text-decoration: none;
+      background-color: $te-lightblue;
+
+      &::before,
+      &::after {
+        background-color: $te-lightblue;
+      }
+    }
+  }
+}
+
+.formbutton-save,
+.formbutton-preview {
+  a {
+    background-image: none;
+  }
+}
+
+.formbutton-open {
+  & > a {
+    background-color: $te-sunfloweryellow;
+    background-image: url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 11 12\'%3E%3Cpath fill=\'%23000\' fill-rule=\'nonzero\' d=\'M4.1829.281v1.615h-2.568v7.7703h7.7703V7.0982H11v4.1829H0v-11h4.1829zM11 .281v5.1132H9.2793V3.2185L5.2167 7.281 4 6.0644l4.0626-4.0626H5.887V.281H11z\'/%3E%3C/svg%3E');
+    background-size: 11px;
+    padding: 10px 10px 10px 20px;
+
+    @include media-breakpoint-up(lg) {
+      background-position: 20px center;
+    }
+    @include media-breakpoint-up(xl) {
+      background-position: 50px center
+    }
+
+    &:hover {
+      background-color: $te-lightblue;
+    }
+
+  }
+
+  & > a,
+  .smw-edit-dropdown {
+    transition-property: background-color, border;
+    transition-duration: 150ms;
+    transition-timing-function: ease-in-out;
+    background-color: $te-sunfloweryellow;
+    border-color: $te-sunfloweryellow;
+
+    &:hover {
+      background-color: $te-lightblue;
+      border-color: $te-lightblue;
+    }
+
+  }
+
+}
+
+// used on pageheader
+.pageheader-form-button.formbutton-add,
+.pageheader-form-button.formbutton-edit {
+  form {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    padding-top: 2px;
+    background-color: $te-lightblue;
+    transition: background-color 150ms ease-in-out;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 9 9' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='%23FFF' d='M5.551 5.5396V9H3.4694V5.5396H3.449L0 5.5378V3.4604h3.449V0h2.0816v3.4604h.0204L9 3.4622v2.0774z'/%3E%3C/svg%3E");
+    background-position: 32px 18px;
+    background-size: 9px;
+    background-repeat: no-repeat;
+
+
+    &::before {
+      right: -10px;
+      left: auto;
+    }
+
+    button {
+      display: inline-block;
+      height: 42px;
+      padding: 10px 30px 10px 55px;
+      font-family: $te-font-bold;
+      font-size: rem-calc(16);
+      line-height: 1;
+      border: none;
+      background-color: transparent;
+    }
+
+    &:hover {
+      text-decoration: none;
+      background-color: $te-sunfloweryellow;
+
+      &::before,
+      &::after {
+        background-color: $te-sunfloweryellow;
+      }
+    }
+  }
+
+  &.formbutton-add--instruction {
+    max-width: 300px;
+
+    form {
+      &.is-open {
+        background-color: $te-sunfloweryellow;
+      }
+    }
+
+    span {
+      display: block;
+      white-space: initial;
+      font-size: rem-calc(16);
+      line-height: unitless-calc(22, 16)
+    }
+
+    .dropdown-item-title {
+      font-family: $te-font-bold;
+    }
+
+    .dropdown-item {
+      padding: 0;
+
+      &:hover {
+        background-color: initial;
+        cursor: pointer;
+
+        .dropdown-item-title {
+          text-decoration: underline;
+        }
+
+      }
+
+    }
+
+    .te-dropdown-menu {
+      top: 70px;
+      right: -89px;
+
+      width: 250px;
+      z-index: 11;
+      transform: none;
+      padding: 20px;
+
+      .dropdown-item {
+        padding-bottom: 15px;
+        padding-top: 15px;
+
+        &:first-child {
+          padding-top: 0;
+          border-bottom: 1px solid $te-border-color;
+        }
+
+        &:last-child {
+          padding-bottom: 0;
+        }
+      }
+
+      &:before{
+        border-width: 0 12px 12px 12px;
+        right: 128px
+      }
+      &:after{
+        border-width: 1px 10px 10px 10px;
+        right: 130px
+      }
+
+
+      @include media-breakpoint-up(lg) {
+
+        right: 1px;
+
+        &:before{
+          border-width: 0 12px 12px 12px;
+          right: 38px
+        }
+        &:after{
+          border-width: 1px 10px 10px 10px;
+          right: 40px
+
+        }
+      }
+
+
+    }
+  }
+
+}
+
+.pageheader-form-button.formbutton-edit {
+
+  margin-top: 25px;
+  justify-content: center;
+  margin-bottom: -5px;
+
+  @include media-breakpoint-up(lg) {
+    display: flex;
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+  @include media-breakpoint-up(xl) {
+    margin-top: 15px;
+  }
+
+  & > a {
+    padding: 10px 85px 10px 105px;
+    background-position: 80px center;
+  }
+
+}
+
+.formbutton-edit {
+  .smw-edit-dropdown {
+    transition-property: background-color, border;
+    transition-duration: 150ms;
+    transition-timing-function: ease-in-out;
+    background-color: $te-lightblue;
+    border-color: $te-lightblue;
+
+    &:hover {
+      background-color: $te-sunfloweryellow;
+      border-color: $te-sunfloweryellow;
+    }
+
+    &.is-open {
+      background: $te-white;
+      border: solid 2px $te-border-color;
+    }
+
+  }
+
+}
+
+
+// Save and Preview buttons
+.formbuttons {
+  display: flex;
+  align-items: center;
+
+  input {
+    display: inline-block;
+    height: 44px;
+    padding: 10px 20px;
+    font-family: $te-font-bold;
+    font-size: rem-calc(16);
+    text-transform: lowercase;
+    border: none;
+    background-color: $te-lightblue;
+    transition: background-color 150ms ease-in-out;
+
+    &:hover {
+      background-color: $te-sunfloweryellow;
+    }
+  }
+
+
+  input[name='wpPreview'] {
+    margin-left: 15px;
+  }
+
+  .formEditCancel {
+    margin-left: 15px;
+    font-family: $te-font-bold;
+    font-size: rem-calc(16);
+    text-transform: lowercase;
+
+    &:hover {
+      a {
+        text-decoration: none;
+      }
+    }
+  }
+}

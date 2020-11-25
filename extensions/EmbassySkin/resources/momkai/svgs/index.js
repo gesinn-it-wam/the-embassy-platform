@@ -1,0 +1,27 @@
+import './icon-resources.svg';
+import './icon-form-submit.svg';
+import './icon-twitter.svg';
+import './icon-plus.svg';
+import './icon-resources-guidelines.svg';
+import './icon-resources-training-materials.svg';
+import './icon-resources-education.svg';
+import './icon-resources-cases.svg';
+import './icon-resources-experts-committees.svg';
+import './icon-themes.svg';
+import './icon-back.svg';
+import './icon-forward.svg';
+import './icon-hyperlink.svg';
+import './icon-checkbox-lightbulb.svg';
+import './icon-play.svg';
+import './icon-discussions.svg';
+import './icon-trainings.svg';
+import './icon-pencil.svg';
+import './icon-share.svg';
+import './icon-arrow-down.svg';
+import './icon-arrow-right.svg';
+import './icon-error.svg';
+import './icon-info.svg';
+import './icon-minus.svg';
+import './icon-download.svg';
+import './icon-instruction.svg';
+

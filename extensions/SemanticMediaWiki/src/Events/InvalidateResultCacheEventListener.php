@@ -4,7 +4,8 @@ namespace SMW\Events;
 
 use Onoi\EventDispatcher\EventListener;
 use Onoi\EventDispatcher\DispatchContext;
-use SMW\Query\Result\CachedQueryResultPrefetcher;
+use SMW\Query\Cache\ResultCache;
+use SMW\DIWikiPage;
 use Psr\Log\LoggerAwareTrait;
 
 /**
@@ -18,15 +19,15 @@ class InvalidateResultCacheEventListener implements EventListener {
 	use LoggerAwareTrait;
 
 	/**
-	 * @var CachedQueryResultPrefetcher
+	 * @var ResultCache
 	 */
-	private $cachedQueryResultPrefetcher;
+	private $resultCache;
 
 	/**
 	 * @since 3.1
 	 */
-	public function __construct( CachedQueryResultPrefetcher $cachedQueryResultPrefetcher ) {
-		$this->cachedQueryResultPrefetcher = $cachedQueryResultPrefetcher;
+	public function __construct( ResultCache $resultCache ) {
+		$this->resultCache = $resultCache;
 	}
 
 	/**
@@ -36,11 +37,30 @@ class InvalidateResultCacheEventListener implements EventListener {
 	 */
 	public function execute( DispatchContext $dispatchContext = null ) {
 
-		$context = $dispatchContext->get( 'context' );
-		$subject = $dispatchContext->get( 'subject' );
+		if ( $dispatchContext === null ) {
+			return;
+		}
 
-		$this->cachedQueryResultPrefetcher->invalidate(
-			$dispatchContext->get( 'dependency_list' ),
+		if ( $dispatchContext->has( 'title' ) ) {
+			$subject = DIWikiPage::newFromTitle( $dispatchContext->get( 'title' ) );
+		} else{
+			$subject = $dispatchContext->get( 'subject' );
+		}
+
+		if ( $dispatchContext->has( 'context' ) ) {
+			$context = $dispatchContext->get( 'context' );
+		} else {
+			$context = 'n/a';
+		}
+
+		if ( $dispatchContext->has( 'dependency_list' ) ) {
+			$items = $dispatchContext->get( 'dependency_list' );
+		} else {
+			$items = [ $subject ];
+		}
+
+		$this->resultCache->invalidateCache(
+			$items,
 			$context
 		);
 

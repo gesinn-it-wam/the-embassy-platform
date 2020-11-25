@@ -1,0 +1,36 @@
+================================================
+ MediaWiki Extension: EditWarning
+================================================
+
+Authors: Thomas David (nemphis@code-geek.de), Sebastian Schmid (gesinn.it GmbH)
+Version: 1.0
+Date: 2020-07-21
+Licence: GNU GPL 2.0 or later
+
+If the user opens a page for editing which is being edited by another user
+at the same time this extension displays a warning on the editing page.
+
+Notice: It's not recommended to use this extension if anonymous users
+are allowed to edit pages, because it ignores anonymous page edits.
+
+If you want to improve or extend this extension, fork it at github:
+https://github.com/nemphis/mw-editwarning
+
+===== Installation =====
+
+1.) Move the folder "EditWarning" to the "extensions" folder of your
+    MediaWiki installation.
+
+2.) Add this line to your LocalSettings.php:
+
+wfLoadExtension("EditWarning");
+
+3.) Run the "update.php" script from the base directory of your MediaWiki installation:
+
+php maintenance/update.php
+
+4.) Optional: The default timeout is set to 10 minutes. If you want to change
+              this setting, add this line to your LocalSettings.php
+              (Note: The value is the number of minutes):
+
+$EditWarning_Timeout = 5;

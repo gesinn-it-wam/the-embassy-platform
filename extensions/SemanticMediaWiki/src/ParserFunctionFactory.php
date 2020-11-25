@@ -118,6 +118,10 @@ class ParserFunctionFactory {
 			$parserData->setOption( $parserData::NO_QUERY_DEPENDENCY_TRACE, $parser->getOptions()->smwAskNoDependencyTracking );
 		}
 
+		if ( $parserData->hasAnnotationBlock() ) {
+			$parserData->setOption( $parserData::NO_QUERY_DEPENDENCY_TRACE, true );
+		}
+
 		// Avoid possible actions during for example stashedit etc.
 		$parserData->setOption( 'request.action', $GLOBALS['wgRequest']->getVal( 'action' ) );
 
@@ -168,8 +172,18 @@ class ParserFunctionFactory {
 	 */
 	public function newShowParserFunction( Parser $parser ) {
 
+		$settings = ApplicationFactory::getInstance()->getSettings();
+
+		$askParserFunction = $this->newAskParserFunction(
+			$parser
+		);
+
+		$askParserFunction->setCurtailmentMode(
+			$settings->isFlagSet( 'smwgExperimentalFeatures', SMW_SHOWPARSER_USE_CURTAILMENT )
+		);
+
 		$showParserFunction = new ShowParserFunction(
-			$this->newAskParserFunction( $parser )
+			$askParserFunction
 		);
 
 		return $showParserFunction;

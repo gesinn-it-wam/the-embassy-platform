@@ -5,6 +5,7 @@ namespace SMW\MediaWiki\Specials\Ask;
 use Html;
 use SMW\Message;
 use SMWInfolink as Infolink;
+use SMW\Utils\UrlArgs;
 use Title;
 
 /**
@@ -280,6 +281,7 @@ class LinksWidget {
 			return '';
 		}
 
+		$urlArgs = clone $urlArgs;
 		$urlArgs->set( 'eq', 'yes' );
 		$urlArgs->set( 'debug', 'true' );
 		$urlArgs->setFragment( 'search' );
@@ -366,7 +368,8 @@ class LinksWidget {
 			'span',
 			[
 				'id' => 'ask-clipboard ',
-			//	'class' => 'smw-ask-button smw-ask-button-right smw-ask-button-lgrey'
+				'class' => 'page-link',
+				'style' => 'vertical-align: top;'
 			],
 			Html::element(
 				'a',

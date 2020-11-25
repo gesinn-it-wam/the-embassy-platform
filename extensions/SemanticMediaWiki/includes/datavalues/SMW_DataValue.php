@@ -9,7 +9,6 @@
  */
 
 use SMW\DataValues\InfoLinksProvider;
-use SMW\Deserializers\DVDescriptionDeserializerRegistry;
 use SMW\DIProperty;
 use SMW\Localizer;
 use SMW\Message;
@@ -187,6 +186,11 @@ abstract class SMWDataValue {
 	private $descriptionBuilderRegistry;
 
 	/**
+	 * @var []
+	 */
+	private $callables = [];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param string $typeid
@@ -241,7 +245,7 @@ abstract class SMWDataValue {
 		}
 
 		if ( $this->isValid() && !$this->getOption( self::OPT_QUERY_CONTEXT ) ) {
-			$this->checkAllowedValues();
+			$this->checkConstraints();
 		}
 	}
 
@@ -395,7 +399,7 @@ abstract class SMWDataValue {
 	 * @note Errors should not be escaped here in any way, in contradiction to what
 	 * the docs used to say here in 1.5 and before. Escaping should happen at the output.
 	 *
-	 * @param mixed $error A single string, or array of strings.
+	 * @param array|string|ProcessingError $error
 	 */
 	public function addError( $error ) {
 
@@ -799,42 +803,46 @@ abstract class SMWDataValue {
 	}
 
 	/**
-	 * @since 2.3
+	 * @since 3.1
 	 *
-	 * @param string $name
-	 * @param array $parameters
+	 * @param string $key
+	 * @param callable $callable
 	 *
-	 * @return mixed
 	 * @throws RuntimeException
 	 */
-	public function getExtraneousFunctionFor( $name, array $parameters = [] ) {
-		return $this->dataValueServiceFactory->newExtraneousFunctionByName( $name, $parameters );
-	}
+	public function addCallable( $key, callable $callable ) {
 
-	/**
-	 * @since 3.0
-	 *
-	 * @param string $key
-	 * @param mixed $data
-	 */
-	public function setExtensionData( $key, $data ) {
-		$this->extenstionData[$key] = $data;
-	}
-
-	/**
-	 * @since 3.0
-	 *
-	 * @param string $key
-	 *
-	 * @return mixed
-	 */
-	public function getExtensionData( $key ) {
-
-		if ( isset( $this->extenstionData[$key] ) ) {
-			return $this->extenstionData[$key];
+		if ( isset( $this->callables[$key] ) ) {
+			throw new RuntimeException( "`$key` is alread in use, please clear the callable first!" );
 		}
 
-		return null;
+		$this->callables[$key] = $callable;
+	}
+
+	/**
+	 * @since 3.1
+	 *
+	 * @param string $key
+	 *
+	 * @return callable
+	 * @throws RuntimeException
+	 */
+	public function getCallable( $key ) {
+
+		if ( !isset( $this->callables[$key] ) ) {
+			throw new RuntimeException( "`$key` as callable is unknown or not registered!" );
+		}
+
+		return $this->callables[$key];
+	}
+
+	/**
+	 * @since 3.1
+	 *
+	 * @param string $key
+	 */
+	public function clearCallable( $key ) {
+		unset( $this->callables[$key] );
 	}
 
 	/**
@@ -955,16 +963,26 @@ abstract class SMWDataValue {
 	}
 
 	/**
-	 * Check if property is range restricted and, if so, whether the current value is allowed.
-	 * Creates an error if the value is illegal.
+	 * @deprecated since 3.1, use DataValue::checkConstraints
 	 */
 	protected function checkAllowedValues() {
+		$this->checkConstraints();
+	}
+
+	/**
+	 * @since 3.1
+	 */
+	public function checkConstraints() {
 
 		if ( $this->dataValueServiceFactory === null ) {
 			return;
 		}
 
 		$this->dataValueServiceFactory->getConstraintValueValidator()->validate( $this );
+	}
+
+	function __destruct() {
+		$this->callables = [];
 	}
 
 }

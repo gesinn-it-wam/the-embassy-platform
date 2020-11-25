@@ -23,6 +23,7 @@ use SMW\Elastic\Indexer\IndicatorProvider;
 use SMW\Elastic\Indexer\Bulk;
 use SMW\Elastic\Indexer\Replication\ReplicationStatus;
 use SMW\Elastic\Indexer\Replication\CheckReplicationTask;
+use SMW\Elastic\Indexer\Replication\DocumentReplicationExaminer;
 use SMW\Elastic\QueryEngine\ConditionBuilder;
 use SMW\Elastic\QueryEngine\QueryEngine;
 use SMW\Elastic\QueryEngine\TermsLookup\CachingTermsLookup;
@@ -41,6 +42,7 @@ use SMW\Elastic\QueryEngine\DescriptionInterpreters\SomePropertyInterpreter;
 use SMW\Elastic\QueryEngine\DescriptionInterpreters\ValueDescriptionInterpreter;
 use SMW\Elastic\QueryEngine\DescriptionInterpreters\SomeValueInterpreter;
 use SMW\Elastic\Lookup\ProximityPropertyValueLookup;
+use SMW\Elastic\Hooks\UpdateEntityCollationComplete;
 
 /**
  * @license GNU GPL v2+
@@ -217,6 +219,30 @@ class ElasticFactory {
 	 *
 	 * @param Store $store
 	 *
+	 * @return DocumentReplicationExaminer
+	 */
+	public function newDocumentReplicationExaminer( Store $store = null ) {
+
+		$applicationFactory = ApplicationFactory::getInstance();
+
+		if ( $store === null  ) {
+			$store = $applicationFactory->getStore();
+		}
+
+		$documentReplicationExaminer = new DocumentReplicationExaminer(
+			$store,
+			$this->newReplicationStatus( $store->getConnection( 'elastic' ) )
+		);
+
+		return $documentReplicationExaminer;
+	}
+
+
+	/**
+	 * @since 3.1
+	 *
+	 * @param Store $store
+	 *
 	 * @return CheckReplicationTask
 	 */
 	public function newCheckReplicationTask( Store $store = null ) {
@@ -232,12 +258,12 @@ class ElasticFactory {
 
 		$checkReplicationTask = new CheckReplicationTask(
 			$store,
-			$this->newReplicationStatus( $connection ),
+			$this->newDocumentReplicationExaminer( $store ),
 			$applicationFactory->getEntityCache()
 		);
 
 		$checkReplicationTask->setCacheTTL(
-			$options->dotGet( 'indexer.monitor.entity.replication.cache.lifetime' )
+			$options->dotGet( 'indexer.monitor.entity.replication.cache_lifetime' )
 		);
 
 		return $checkReplicationTask;
@@ -343,6 +369,22 @@ class ElasticFactory {
 
 		return $rebuilder;
 	}
+
+	/**
+	 * @since 3.1
+	 *
+	 * @param Store $store
+	 * @param MessageReporter $messageReporter
+	 *
+	 * @return UpdateEntityCollationComplete
+	 */
+	public function newUpdateEntityCollationComplete( Store $store, MessageReporter $messageReporter ) {
+		return new UpdateEntityCollationComplete(
+			$store,
+			$messageReporter
+		);
+	}
+
 
 	/**
 	 * @since 3.0
@@ -525,14 +567,18 @@ class ElasticFactory {
 			return true;
 		}
 
-		$title = $dispatchContext->get( 'title' );
+		if ( $dispatchContext->has( 'subject' ) ) {
+			$subject = $dispatchContext->get( 'subject' );
+		} else {
+			$subject = $dispatchContext->get( 'title' );
+		}
 
 		$checkReplicationTask = $this->newCheckReplicationTask(
 			$store
 		);
 
 		$checkReplicationTask->deleteReplicationTrail(
-			$title
+			$subject
 		);
 	}
 
@@ -542,6 +588,38 @@ class ElasticFactory {
 	 */
 	public function onRegisterEventListeners( $eventListener ) {
 		$eventListener->registerCallback( 'InvalidateEntityCache', [ $this, 'onInvalidateEntityCache' ] );
+
+		return true;
+	}
+
+	/**
+	 * @see https://www.semantic-mediawiki.org/wiki/Hooks#SMW::Maintenance::AfterUpdateEntityCollationComplete
+	 * @since 3.1
+	 */
+	public function onAfterUpdateEntityCollationComplete( $store, $messageReporter ) {
+
+		if (
+			( $connection = $store->getConnection( 'elastic' ) ) === null ||
+			$connection instanceof DummyClient ) {
+			return true;
+		}
+
+		$rebuilder = $this->newRebuilder(
+			$store
+		);
+
+		$rebuilder->setMessageReporter(
+			$messageReporter
+		);
+
+		$updateEntityCollationComplete = $this->newUpdateEntityCollationComplete(
+			$store,
+			$messageReporter
+		);
+
+		$updateEntityCollationComplete->runUpdate(
+			$rebuilder
+		);
 
 		return true;
 	}

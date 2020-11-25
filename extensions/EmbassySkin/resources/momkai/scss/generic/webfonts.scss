@@ -1,0 +1,31 @@
+@font-face {
+  font-family: 'regular-regular';
+  src: url('#{$font-regular-path}Regular-RegularWEB.woff2') format('woff2'),
+  url('#{$font-regular-path}Regular-RegularWEB.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'regular-bold';
+  src: url('#{$font-regular-path}Regular-BoldWEB.woff2') format('woff2'),
+  url('#{$font-regular-path}Regular-BoldWEB.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'regular-extrabold';
+  src: url('#{$font-regular-path}Regular-ExtraboldWEB.woff2') format('woff2'),
+  url('#{$font-regular-path}Regular-ExtraboldWEB.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+}
+
+$font-body-text: 'regular-regular', "Helvetica Neue",  Arial, sans-serif;
+$font-headings-bold: 'regular-bold', "Helvetica Neue", Arial, sans-serif;
+$font-headings-extrabold: 'regular-extrabold', "Helvetica Neue", Arial, sans-serif;
+
+$te-font-regular: 'regular-regular';
+$te-font-bold: 'regular-bold';
+$te-font-extrabold: 'regular-extrabold';

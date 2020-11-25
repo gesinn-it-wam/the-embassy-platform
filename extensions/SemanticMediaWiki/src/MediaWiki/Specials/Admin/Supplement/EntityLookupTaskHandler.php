@@ -97,7 +97,7 @@ class EntityLookupTaskHandler extends TaskHandler {
 	public function getHtml() {
 
 		$link = $this->outputFormatter->createSpecialPageLink(
-			$this->msg( 'smw-admin-supplementary-idlookup-title' ),
+			$this->msg( 'smw-admin-supplementary-idlookup-short-title' ),
 			[
 				'action' => 'lookup'
 			]
@@ -122,7 +122,10 @@ class EntityLookupTaskHandler extends TaskHandler {
 	 */
 	public function handleRequest( WebRequest $webRequest ) {
 
-		$this->outputFormatter->setPageTitle( $this->msg( 'smw-admin-supplementary-idlookup-title' ) );
+		$this->outputFormatter->setPageTitle(
+			$this->msg( [ 'smw-admin-main-title', $this->msg( 'smw-admin-supplementary-idlookup-title' ) ] )
+		);
+
 		$this->outputFormatter->addParentLink( [ 'tab' => 'supplement' ] );
 
 		// https://phabricator.wikimedia.org/T109652#1562641
@@ -171,7 +174,7 @@ class EntityLookupTaskHandler extends TaskHandler {
 			->setMethod( 'get' )
 			->addHiddenField( 'action', 'lookup' )
 			->addParagraph( $error )
-			->addHeader( 'h2', $this->msg( 'smw-admin-idlookup-title' ) )
+			->addHeader( 'h3', $this->msg( 'smw-admin-idlookup-title' ), [ 'class' => 'smw-title' ] )
 			->addParagraph( $this->msg( 'smw-admin-idlookup-docu' ) )
 			->addInputField(
 				$this->msg( 'smw-admin-objectid' ),
@@ -199,7 +202,7 @@ class EntityLookupTaskHandler extends TaskHandler {
 			->setMethod( 'get' )
 			->addHiddenField( 'action', 'lookup' )
 			->addHiddenField( 'id', $id )
-			->addHeader( 'h2', $this->msg( 'smw-admin-iddispose-title' ) )
+			->addHeader( 'h3', $this->msg( 'smw-admin-iddispose-title' ), [ 'class' => 'smw-title' ] )
 			->addParagraph( $this->msg( 'smw-admin-iddispose-docu', Message::PARSE ), [ 'class' => 'plainlinks' ] )
 			->addInputField(
 				$this->msg( 'smw-admin-objectid' ),
@@ -237,14 +240,17 @@ class EntityLookupTaskHandler extends TaskHandler {
 		}
 
 		$rows = $connection->select(
-				\SMWSql3SmwIds::TABLE_NAME,
+				SQLStore::ID_TABLE,
 				[
 					'smw_id',
 					'smw_title',
 					'smw_namespace',
 					'smw_iw',
 					'smw_subobject',
-					'smw_sortkey'
+					'smw_sortkey',
+					'smw_proptable_hash',
+					'smw_rev',
+					'smw_touched'
 				],
 				$condition,
 				__METHOD__
@@ -269,6 +275,8 @@ class EntityLookupTaskHandler extends TaskHandler {
 				$references[$id] = $this->store->getPropertyTableIdReferenceFinder()->searchAllTablesToFindAtLeastOneReferenceById(
 					$id
 				);
+
+				$row->smw_proptable_hash = $row->smw_proptable_hash === null ? null : '...';
 
 				$formattedRows[$id] = (array)$row;
 				$this->addFulltextInfo( $id, $references );

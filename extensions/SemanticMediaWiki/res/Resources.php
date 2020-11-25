@@ -65,6 +65,14 @@ return [
 		'targets' => [ 'mobile', 'desktop' ]
 	],
 
+	'smw.summarytable' => $moduleTemplate + [
+		'styles' => [
+			'smw/smw.summarytable.css'
+		],
+		'position' => 'top',
+		'targets' => [ 'mobile', 'desktop' ]
+	],
+
 	'ext.smw.special.style' => $moduleTemplate + [
 		'styles' => [
 			'smw/special/ext.smw.special.css'
@@ -237,7 +245,8 @@ return [
 		'dependencies' => [
 			'ext.smw.tooltip.styles',
 			'smw.tippy'
-		]
+		],
+		'targets' => [ 'mobile', 'desktop' ]
 	],
 
 	'ext.smw.tooltips' => $moduleTemplate + [
@@ -259,7 +268,8 @@ return [
 	'ext.smw.purge' => $moduleTemplate + [
 		'scripts' => 'smw/util/ext.smw.util.purge.js',
 		'messages' => [
-			'smw-purge-failed'
+			'smw-purge-failed',
+			'smw-purge-update-dependencies'
 		],
 		'position' => 'top',
 		'targets' => [
@@ -534,7 +544,8 @@ return [
 	'ext.smw.admin' => $moduleTemplate + [
 		'scripts' => 'smw/special/ext.smw.special.admin.js',
 		'dependencies' => [
-			'mediawiki.api'
+			'mediawiki.api',
+			'smw.jsonview'
 		],
 		'messages' => [
 			'smw-no-data-available',
@@ -725,6 +736,10 @@ return [
 			'ext.smw'
 		],
 		'position' => 'top',
+		'targets' => [
+			'mobile',
+			'desktop'
+		]
 	],
 
 	'ext.libs.tippy'  => $moduleTemplate + [

@@ -31,7 +31,7 @@ class SemanticDataLookup {
 	/**
 	 * @var string
 	 */
-	private $fname = '';
+	private $caller = '';
 
 	/**
 	 * @since 3.0
@@ -146,10 +146,9 @@ class SemanticDataLookup {
 		}
 
 		// A request has set a limit on how many values should be retrieved, yet
-		// without specifying which property the limit is for it is assumed
-		// that for the referenced table (`$propTable`) to apply the limit to all
-		// available properties assigned to (`id`) and merge them into the
-		// `StubSemanticData`
+		// without specifying which property the limit is for the entire referenced
+		// table (`$propTable`). Make sure to apply the limit to all available
+		// properties to an assigned `id` and merge them into the `StubSemanticData`
 		if ( $matchLimit && !$propTable->isFixedPropertyTable() && $propTable->usesIdSubject() ) {
 			$res = $this->fetchPropertiesFromTable( $id, $propTable );
 			$opts = clone $requestOptions;
@@ -183,6 +182,11 @@ class SemanticDataLookup {
 			}
 		}
 
+		$stubSemanticData->setSequenceMap(
+			$id,
+			$this->store->getObjectIds()->getSequenceMap( $id )
+		);
+
 		return $stubSemanticData;
 	}
 
@@ -200,6 +204,7 @@ class SemanticDataLookup {
 
 		$ids = [];
 		$isSubject = true;
+		$entityIdManager = $this->store->getObjectIds();
 
 		foreach ( $subjects as $k => $subject ) {
 
@@ -207,7 +212,7 @@ class SemanticDataLookup {
 				continue;
 			}
 
-			$id = $this->store->getObjectIds()->getSMWPageID(
+			$id = $entityIdManager->getSMWPageID(
 				$subject->getDBkey(),
 				$subject->getNamespace(),
 				$subject->getInterwiki(),
@@ -223,8 +228,8 @@ class SemanticDataLookup {
 			return [];
 		}
 
-		$pid = $this->store->getObjectIds()->getSMWPropertyID( $property );
-		$this->fname = __METHOD__;
+		$pid = $entityIdManager->getSMWPropertyID( $property );
+		$this->caller = __METHOD__;
 
 		$connection = $this->store->getConnection( 'mw.db' );
 		$query = $connection->newQuery();
@@ -273,14 +278,9 @@ class SemanticDataLookup {
 			$result[$sid]["$i#$h"] = $data[1];
 		}
 
-	// Avoiding any sorting to avoid distrupting the output for the integration
-	// tests as part of introducing the prefetch mode
-	//	foreach ( $result as $id => &$value ) {
-	//	 	ksort( $value );
-	//	}
+		$entityIdManager->loadSequenceMap( array_keys( $ids ) );
 
 		return $result;
-
 	}
 
 	/**
@@ -333,7 +333,7 @@ class SemanticDataLookup {
 
 		$result = [];
 		$connection = $this->store->getConnection( 'mw.db' );
-		$this->fname = __METHOD__;
+		$this->caller = __METHOD__;
 
 		// Build something like:
 		//
@@ -461,11 +461,28 @@ class SemanticDataLookup {
 
  		// Apply sorting/string matching; only with given property
 		if ( !$isSubject ) {
+
+			if (
+				$requestOptions->getStringConditions() !== [] &&
+				$requestOptions->sort ) {
+				$sort = $requestOptions->ascending ? 'ASC' : 'DESC';
+				$requestOptions->setOption( 'ORDER BY', $map[$sortField] . " $sort" );
+			}
+
+			// Use the `smw_sortkey` when applying a string condition match
+			// otherwise the `o_id` is used as match field which doesn't make
+			// sense for something like `%foo%`
+			if (
+				$requestOptions->getStringConditions() !== [] &&
+				$propTable->getDiType() === DataItem::TYPE_WIKIPAGE ) {
+				$labelField = "smw_sortkey";
+			}
+
 			$conds = $this->store->getSQLConditions(
 				$requestOptions,
 				$valueField,
 				$labelField,
-				$query->hasCondition()
+				false
 			);
 
 			$query->condition( $conds );
@@ -494,12 +511,21 @@ class SemanticDataLookup {
 
 		if ( $requestOptions->exclude_limit ) {
 			$query->option( 'LIMIT', null );
+			$query->option( 'OFFSET', null );
+		}
+
+		$caller = $this->caller;
+
+		if ( strval( $requestOptions->getCaller() ) !== '' ) {
+			$caller .= " (for " . $requestOptions->getCaller() . ")";
 		}
 
 		$res = $connection->query(
 			$query,
-			$this->fname
+			$caller
 		);
+
+		$warmupCache = [];
 
 		foreach ( $res as $row ) {
 			$propertykey = '';
@@ -519,15 +545,24 @@ class SemanticDataLookup {
 				$isSubject,
 				$propertykey
 			);
+
+			// Using a short-cut to warmup the cache/linkbatch instance
+			if ( $propTable->getDiType() === DataItem::TYPE_WIKIPAGE ) {
+				$warmupCache[] = DIWikiPage::newFromText( $row->v0, $row->v1 );
+			}
 		}
 
 		$connection->freeResult( $res );
 
 		// Sorting via PHP for an explicit disabled `ORDER BY` to ensure that
-		// the result set at least a lexical order is applied for range of
-		// retrieved values
+		// the result set has at least a lexical order for range of
+		// retrieved values and is hereby deterministic
 		if ( $requestOptions->getOption( 'ORDER BY' ) === false ) {
 			sort( $result );
+		}
+
+		if ( $warmupCache !== [] ) {
+			$this->store->getObjectIds()->warmupCache( $warmupCache );
 		}
 
 		return $result;
@@ -591,7 +626,14 @@ class SemanticDataLookup {
 				$query->field( "o$valueCount.smw_sortkey AS v" . ( $valueCount + 3 ) );
 				$map[$fieldname] = "v" . ( $valueCount + 3 );
 
+				// In case of switching the position of v3/v4 (subobject, sortkey/sort)
+				// see below the position reassignment of sort
+				// Row position is important when building an instance using
+				// `DIWikiPageHandler::newDiWikiPage`
 				$query->field( "o$valueCount.smw_subobject AS v" . ( $valueCount + 4 ) );
+
+				$query->field( "o$valueCount.smw_sort AS v" . ( $valueCount + 5 ) );
+				$map[$fieldname] = "v" . ( $valueCount + 5 );
 
 				if ( $valueField == $fieldname ) {
 					$valueField = "o$valueCount.smw_sortkey";
@@ -600,7 +642,7 @@ class SemanticDataLookup {
 					$labelField = "o$valueCount.smw_sortkey";
 				}
 
-				$valueCount += 4;
+				$valueCount += 5;
 			} else {
 				$map[$fieldname] = "v$valueCount";
 				$query->field( $fieldname, "v$valueCount" );
@@ -634,10 +676,21 @@ class SemanticDataLookup {
 		// Use enclosing array only for results with many values:
 		if ( $valueCount > 1 ) {
 			$valueKeys = [];
-			for ( $i = 0; $i < $valueCount; $i += 1 ) { // read the value fields from the current row
+
+			// read the value fields from the current row
+			for ( $i = 0; $i < $valueCount; $i += 1 ) {
 				$fieldname = "v$i";
 				$valueKeys[] = $row->$fieldname;
 			}
+
+			// Switch the `smw_sortkey` with `smw_sort` field to ensure that
+			// DIWikiPage::setSortKey uses the `smw_sort` value
+			if ( $valueCount == 6 ) {
+				$valueKeys[3] = $valueKeys[5];
+				unset( $valueKeys[5] );
+				$valueCount = 5;
+			}
+
 		} else {
 			$valueKeys = $row->v0;
 		}
@@ -656,7 +709,8 @@ class SemanticDataLookup {
 		}
 
 		if ( $sortField !== '' ) {
-			//Avoid issues with `$row->$sortField` containing other `#` as for example in case of a subobject name
+			// Avoid issues with `$row->$sortField` containing other `#` as for
+			// example in case of a subobject name
 			$hash = mb_substr( str_replace( '#', '|', $row->$sortField ), 0, 32 ) . '#' . $hash;
 		}
 
@@ -668,7 +722,7 @@ class SemanticDataLookup {
 		if ( $valueCount < 3 ||
 			implode( '', $fields ) !== FieldType::FIELD_ID ||
 			$valueKeys[2] === '' ||
-			$valueKeys[2]{0} != ':' ) {
+			$valueKeys[2][0] != ':' ) {
 
 			if ( isset( $result[$hash] ) ) {
 				$this->reportDuplicate( $propertykey, $valueKeys );

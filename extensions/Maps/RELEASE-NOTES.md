@@ -3,6 +3,38 @@ different releases and which versions of PHP and MediaWiki they support, see the
 [platform compatibility tables](INSTALL.md#platform-compatibility-and-release-status).
 
 
+## Maps 7.3.3
+
+Released on August 2nd, 2019.
+
+* Fixed error in height parameter description
+
+## Maps 7.3.2
+
+Released on July 25th, 2019.
+
+* Removed broken geocode API module
+
+## Maps 7.3.1
+
+Released on July 20th, 2019.
+
+* Fixed compatibility issue with SMW 3.1+ (thanks @mwjames!)
+
+## Maps 7.3.0
+
+Released on May 27th, 2019.
+
+* Fixed loading of certain Leaflet maps due to JavaScript error
+* Fixed `ajaxquery` result format parameter
+* Removed long broken `pagelinktext` option from KML result format
+
+## Maps 7.2.0
+
+Released on March 5th, 2019.
+
+* Fixed Google Maps KML path issue
+
 ## Maps 7.1.0
 
 Released on January 16th, 2019.
@@ -101,7 +133,7 @@ Released on September 4th, 2018.
 
 ### GeoJson support
 
-* Added GeoJson namesapce. Pages in this namespace can only contain GeoJson
+* Added GeoJson namespace. Pages in this namespace can only contain GeoJson
 * The `#display_map` parameter `geojson` now accepts page names of pages in the GeoJson namespace
 
 ### Breaking changes

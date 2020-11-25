@@ -95,6 +95,26 @@ class CacheWarmerTest extends \PHPUnit_Framework_TestCase {
 		$instance->fillFromList( $list );
 	}
 
+	public function testFillFromList_DisplayTitleFinder() {
+
+		$displayTitleFinder = $this->getMockBuilder( '\SMW\DisplayTitleFinder' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$displayTitleFinder->expects( $this->once() )
+			->method( 'prefetchFromList' );
+
+		$instance = new CacheWarmer(
+			$this->store,
+			$this->idCacheManager
+		);
+
+		$instance->setDisplayTitleFinder( $displayTitleFinder );
+		$instance->setThresholdLimit( 1 );
+
+		$instance->fillFromList( [] );
+	}
+
 	public function testFillFromList_Property() {
 
 		$list = [
@@ -131,6 +151,36 @@ class CacheWarmerTest extends \PHPUnit_Framework_TestCase {
 				$this->anything(),
 				$this->equalTo( [ 'smw_hash' => [ '909d8ab26ea49adb7e1b106bc47602050d07d19f' ] ]) )
 			->will( $this->returnValue( [ (object)$row ] ) );
+
+		$this->store = $this->getMockBuilder( '\SMW\SQLStore\SQLStore' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$this->store->expects( $this->any() )
+			->method( 'getConnection' )
+			->will( $this->returnValue( $connection ) );
+
+		$instance = new CacheWarmer(
+			$this->store,
+			$this->idCacheManager
+		);
+
+		$instance->setThresholdLimit( 1 );
+		$instance->fillFromList( $list );
+	}
+
+	public function testFillFromList_UnknownPredefinedProperty() {
+
+		$list = [
+			new DIWikiPage( '_Foo', SMW_NS_PROPERTY )
+		];
+
+		$this->idCacheManager->expects( $this->never() )
+			->method( 'setCache' );
+
+		$connection = $this->getMockBuilder( '\SMW\MediaWiki\Database' )
+			->disableOriginalConstructor()
+			->getMock();
 
 		$this->store = $this->getMockBuilder( '\SMW\SQLStore\SQLStore' )
 			->disableOriginalConstructor()

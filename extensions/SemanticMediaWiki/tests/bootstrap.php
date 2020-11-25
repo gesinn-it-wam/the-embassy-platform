@@ -12,7 +12,7 @@ if ( PHP_SAPI !== 'cli' && PHP_SAPI !== 'phpdbg' ) {
 error_reporting( -1 );
 ini_set( 'display_errors', '1' );
 
-$autoloader = require __DIR__ . '/autoloader.php';
+$autoloader = require SMW_PHPUNIT_AUTOLOADER_FILE;
 
 $autoloader->addPsr4( 'SMW\\Test\\', __DIR__ . '/phpunit' );
 $autoloader->addPsr4( 'SMW\\Tests\\', __DIR__ . '/phpunit' );
@@ -29,6 +29,9 @@ $autoloader->addClassMap( [
 	'SMW\Maintenance\RemoveDuplicateEntities'    => __DIR__ . '/../maintenance/removeDuplicateEntities.php'
 ] );
 
+define( 'SMW_PHPUNIT_DIR', __DIR__ . '/phpunit' );
+define( 'SMW_PHPUNIT_TABLE_PREFIX', 'sunittest_' );
+
 /**
  * Register a shutdown function the invoke a final clean-up
  */
@@ -39,18 +42,23 @@ register_shutdown_function( function() {
 	}
 
 	$connectionManager = ApplicationFactory::getInstance()->getConnectionManager();
+	$connection = $connectionManager->getConnection( 'mw.db' );
 
 	// Reset any sequence modified during the test
 	$sequence = new Sequence(
-		$connectionManager->getConnection( 'mw.db' )
+		$connection
 	);
 
-	$sequence->tablePrefix( '' );
-	$sequence->restart( SQLStore::ID_TABLE, 'smw_id' );
+	try {
+		$sequence->tablePrefix( '' );
+		$sequence->restart( SQLStore::ID_TABLE, 'smw_id' );
+	} catch( \Wikimedia\Rdbms\DBConnectionError $e ) {
+		return;
+	}
 
-	$cleanUpTables =  new CleanUpTables(
-		$connectionManager->getConnection( DB_MASTER )
+	$cleanUpTables = new CleanUpTables(
+		$connection
 	);
 
-	$cleanUpTables->dropTables( 'sunittest_' );
+	$cleanUpTables->dropTables( SMW_PHPUNIT_TABLE_PREFIX );
 } );

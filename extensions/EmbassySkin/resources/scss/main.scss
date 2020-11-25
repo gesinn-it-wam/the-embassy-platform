@@ -1,0 +1,56 @@
+// Fonts needs to be included in a different way because paths may vary
+//@import "fonts";
+
+@import "../momkai/scss/mixins/units";
+
+// this is a copy of the original but needs to be adjusted to get rid of compiling problems
+// add a backslash in front of the ":root" selector, like "\:root" to avoid compiling issues
+@import "../momkai/scss/bootstrap-custom";
+
+@import "../momkai/scss/generic/global";
+@import "../momkai/scss/generic/mediawiki_overwrites";
+
+@import "navbar-modifications";
+@import "mediawiki";
+/*@import "tempFixes";*/
+@import "SemanticDrilldown";
+@import "PageForms";
+@import "VisualEditor";
+@import 'tabs';
+/*@import "../momkai/scss/components-library";*/
+
+@import '../momkai/scss/components/about-card';
+@import '../momkai/scss/components/buttons';
+@import '../momkai/scss/components/banner-block';
+@import '../momkai/scss/components/card';
+@import '../momkai/scss/components/columns';
+@import '../momkai/scss/components/content-tabs';
+@import '../momkai/scss/components/contributors-list';
+@import '../momkai/scss/components/copyright';
+@import '../momkai/scss/components/footer';
+@import '../momkai/scss/components/forms';
+@import '../momkai/scss/components/founders';
+@import '../momkai/scss/components/homeblock';
+@import '../momkai/scss/components/link-button';
+@import '../momkai/scss/components/mailchimp-embed';
+@import '../momkai/scss/components/navigation';
+@import '../momkai/scss/components/other-infomation-block';
+@import '../momkai/scss/components/page-header';
+@import '../momkai/scss/components/profile';
+@import '../momkai/scss/components/read-more';
+@import '../momkai/scss/components/references';
+@import '../momkai/scss/components/related-discussion';
+@import '../momkai/scss/components/related-resource';
+@import '../momkai/scss/components/block';
+@import '../momkai/scss/components/search';
+@import '../momkai/scss/components/spacer';
+@import '../momkai/scss/components/sidebar';
+@import '../momkai/scss/components/sidebar-anchors';
+@import '../momkai/scss/components/steps-content';
+@import '../momkai/scss/components/steps-foldout';
+@import '../momkai/scss/components/summary-block';
+@import '../momkai/scss/components/video-button';
+@import '../momkai/scss/components/virtue-button';
+@import '../momkai/scss/components/te-dropdown-menu';
+@import '../momkai/scss/components/drilldown-filters';
+

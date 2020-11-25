@@ -1,0 +1,16 @@
+.spacer {
+  @include media-breakpoint-up(lg) {
+    transform: translateX(-50vw);
+    margin: 80px -30px;
+    width: 110vw;
+  }
+
+  @include media-breakpoint-up(md) {
+    width: 110vw;
+  }
+  display: block;
+
+  height: 10px;
+  margin: 40px -30px;
+  background: $te-homepage-background;
+}

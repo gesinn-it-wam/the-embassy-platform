@@ -19,13 +19,14 @@ Features:
 * Distance formatting and format conversion via the [`#distance`](https://www.semantic-mediawiki.org/wiki/Maps/Distance) parser function.
 * Visual map editor ([Special:MapEditor](https://www.semantic-mediawiki.org/wiki/Special:MapEditor)) to edit [`#display_map`](https://www.semantic-mediawiki.org/wiki/Extension:Maps/Displaying_maps) wikitext (requires Google Maps).
 
-Maps has been maintained since 2009 and is installed on over 1000 public wikis.
+Maps has been maintained since 2009 and is installed on 1000+ wikis. [Professional.Wiki](https://professional.wiki/) provides professional support.
 
 ## User manual
 
 ### For administrators
 
-* [Installation and configuration](INSTALL.md)
+* [Installation](https://www.semantic-mediawiki.org/wiki/Maps/Installation)
+* [Configuration](https://www.semantic-mediawiki.org/wiki/Maps/Configuration)
 * [Release notes](RELEASE-NOTES.md) - detailed list of changes per release
 * [Platform compatibility](INSTALL.md#platform-compatibility-and-release-status) - overview of PHP and MediaWiki support per release
 
@@ -37,9 +38,9 @@ Maps has been maintained since 2009 and is installed on over 1000 public wikis.
 
 ### Getting support
 
+* Professional support and custom development: **[Professional.Wiki](https://professional.wiki/)**
 * Ask a question on [the mailing list](https://www.semantic-mediawiki.org/wiki/Mailing_list)
-* Ask a question on the [#mediawiki IRC channel](https://webchat.freenode.net/?channels=mediawiki) on Freenode.
-* File an issue on [our issue tracker](https://github.com/JeroenDeDauw/Maps/issues) (technical issues only)
+* File an issue on [our issue tracker](https://github.com/JeroenDeDauw/Maps/issues)
 
 ## Project status
 

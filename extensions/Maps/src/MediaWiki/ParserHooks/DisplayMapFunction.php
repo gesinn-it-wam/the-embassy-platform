@@ -19,16 +19,14 @@ use Parser;
  */
 class DisplayMapFunction {
 
+	private $services;
+
 	private $renderer;
-	private $defaultService;
-	private $availableServices;
 
-	public function __construct() {
+	public function __construct( MappingServices $services ) {
+		$this->services = $services;
+
 		$this->renderer = new DisplayMapRenderer();
-
-		// TODO: inject
-		$this->defaultService = $GLOBALS['egMapsDefaultService'];
-		$this->availableServices = $GLOBALS['egMapsAvailableServices'];
 	}
 
 	/**
@@ -42,20 +40,20 @@ class DisplayMapFunction {
 	public function getMapHtmlForKeyValueStrings( Parser $parser, array $parameters ): string {
 		$processor = new \ParamProcessor\Processor( new \ParamProcessor\Options() );
 
-		// TODO: do not use global access
-		$service = MappingServices::getServiceInstance(
+		$service = $this->services->getServiceOrDefault(
 			$this->extractServiceName(
 				Maps\Presentation\ParameterExtractor::extractFromKeyValueStrings( $parameters )
 			)
 		);
 
-		$parameterDefinitions = self::getHookDefinition( ';' )->getParameters();
-		$service->addParameterInfo( $parameterDefinitions );
 		$this->renderer->service = $service;
 
 		$processor->setFunctionParams(
 			$parameters,
-			$parameterDefinitions,
+			array_merge(
+				self::getHookDefinition( ';' )->getParameters(),
+				$service->getParameterInfo()
+			),
 			self::getHookDefinition( ';' )->getDefaultParameters()
 		);
 
@@ -73,16 +71,16 @@ class DisplayMapFunction {
 	public function getMapHtmlForParameterList( Parser $parser, array $parameters ) {
 		$processor = new \ParamProcessor\Processor( new \ParamProcessor\Options() );
 
-		// TODO: do not use global access
-		$service = MappingServices::getServiceInstance( $this->extractServiceName( $parameters ) );
+		$service = $this->services->getServiceOrDefault( $this->extractServiceName( $parameters ) );
 
-		$parameterDefinitions = self::getHookDefinition( "\n" )->getParameters();
-		$service->addParameterInfo( $parameterDefinitions );
 		$this->renderer->service = $service;
 
 		$processor->setParameters(
 			$parameters,
-			$parameterDefinitions
+			array_merge(
+				self::getHookDefinition( "\n" )->getParameters(),
+				$service->getParameterInfo()
+			)
 		);
 
 		return $this->getMapHtmlFromProcessor( $parser, $processor );
@@ -107,22 +105,7 @@ class DisplayMapFunction {
 			$parameters
 		);
 
-		if ( $service === null ) {
-			return $this->defaultService;
-		}
-
-		// TODO: do not use global access
-		$service = MappingServices::getMainServiceName( $service );
-
-		if ( $this->serviceIsInvalid( $service ) ) {
-			return $this->defaultService;
-		}
-
-		return $service;
-	}
-
-	private function serviceIsInvalid( string $service ) {
-		return !in_array( $service, $this->availableServices );
+		return $service ?? '';
 	}
 
 	private function processedParametersToKeyValueArray( array $params ): array {

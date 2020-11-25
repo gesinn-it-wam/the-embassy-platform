@@ -24,6 +24,10 @@ class ElasticFactoryTest extends \PHPUnit_Framework_TestCase {
 
 	protected function setUp() {
 
+		$this->testEnvironment = new TestEnvironment();
+
+		$this->messageReporter = $this->testEnvironment->getUtilityFactory()->newSpyMessageReporter();
+
 		$options = $this->getMockBuilder( '\SMW\Options' )
 			->disableOriginalConstructor()
 			->getMock();
@@ -47,8 +51,6 @@ class ElasticFactoryTest extends \PHPUnit_Framework_TestCase {
 		$this->connection->expects( $this->any() )
 			->method( 'getConfig' )
 			->will( $this->returnValue( $options ) );
-
-		$this->testEnvironment = new TestEnvironment();
 
 		$store = $this->getMockBuilder( '\SMW\Elastic\ElasticStore' )
 			->disableOriginalConstructor()
@@ -150,11 +152,29 @@ class ElasticFactoryTest extends \PHPUnit_Framework_TestCase {
 
 	public function testCanConstructRebuilder() {
 
+		$store = $this->getMockBuilder( '\SMW\Elastic\ElasticStore' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$store->expects( $this->atLeastOnce() )
+			->method( 'getConnection' )
+			->will( $this->returnValue( $this->connection ) );
+
 		$instance = new ElasticFactory();
 
 		$this->assertInstanceOf(
 			'\SMW\Elastic\Indexer\Rebuilder',
-			$instance->newRebuilder( $this->store )
+			$instance->newRebuilder( $store )
+		);
+	}
+
+	public function testCanConstructUpdateEntityCollationComplete() {
+
+		$instance = new ElasticFactory();
+
+		$this->assertInstanceOf(
+			'\SMW\Elastic\Hooks\UpdateEntityCollationComplete',
+			$instance->newUpdateEntityCollationComplete( $this->store, $this->messageReporter )
 		);
 	}
 
@@ -350,7 +370,27 @@ class ElasticFactoryTest extends \PHPUnit_Framework_TestCase {
 		);
 	}
 
-	public function testOnInvalidateEntityCache() {
+	public function testOnInvalidateEntityCache_OnSubject() {
+
+		$instance = new ElasticFactory();
+
+		$subject = $this->getMockBuilder( '\SMW\DIWikiPage' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$dispatchContext = $this->getMockBuilder( '\Onoi\EventDispatcher\DispatchContext' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$dispatchContext->expects( $this->once() )
+			->method( 'has' )
+			->with( $this->equalTo( 'subject' ) )
+			->will( $this->returnValue( $subject ) );
+
+		$instance->onInvalidateEntityCache( $dispatchContext );
+	}
+
+	public function testOnInvalidateEntityCache_OnTitle() {
 
 		$instance = new ElasticFactory();
 
@@ -375,6 +415,71 @@ class ElasticFactoryTest extends \PHPUnit_Framework_TestCase {
 			->will( $this->returnValue( $title ) );
 
 		$instance->onInvalidateEntityCache( $dispatchContext );
+	}
+
+	public function testOnAfterUpdateEntityCollationComplete() {
+
+		$updateEntityCollationComplete = $this->getMockBuilder( '\SMW\Elastic\Hooks\UpdateEntityCollationComplete' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$rebuilder = $this->getMockBuilder( '\SMW\Elastic\Indexer\Rebuilder' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$store = $this->getMockBuilder( '\SMW\SQLStore\SQLStore' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$store->expects( $this->atLeastOnce() )
+			->method( 'getConnection' )
+			->will( $this->returnValue( $this->connection ) );
+
+		$instance = $this->getMockBuilder( '\SMW\Elastic\ElasticFactory' )
+			->disableOriginalConstructor()
+			->setMethods( [ 'newRebuilder', 'newUpdateEntityCollationComplete' ] )
+			->getMock();
+
+		$instance->expects( $this->atLeastOnce() )
+			->method( 'newRebuilder' )
+			->will( $this->returnValue( $rebuilder ) );
+
+		$instance->expects( $this->atLeastOnce() )
+			->method( 'newUpdateEntityCollationComplete' )
+			->will( $this->returnValue( $updateEntityCollationComplete ) );
+
+		$instance->onAfterUpdateEntityCollationComplete(
+			$store,
+			$this->messageReporter
+		);
+	}
+
+	public function tesOnAfterUpdateEntityCollationComplete_SkipHook() {
+
+		$connection = $this->getMockBuilder( '\SMW\Elastic\Connection\DummyClient' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$store = $this->getMockBuilder( '\SMW\SQLStore\SQLStore' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$store->expects( $this->any() )
+			->method( 'getConnection' )
+			->will( $this->returnValue( $connection ) );
+
+		$instance = $this->getMockBuilder( '\SMW\Elastic\ElasticFactory' )
+			->disableOriginalConstructor()
+			->setMethods( [ 'newRebuilder' ] )
+			->getMock();
+
+		$instance->expects( $this->never() )
+			->method( 'newRebuilder' );
+
+		$instance->onAfterUpdateEntityCollationComplete(
+			$store,
+			$this->messageReporter
+		);
 	}
 
 }

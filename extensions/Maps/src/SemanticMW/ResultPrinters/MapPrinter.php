@@ -10,7 +10,6 @@ use Maps\Elements\Location;
 use Maps\FileUrlFinder;
 use Maps\MappingService;
 use Maps\MapsFunctions;
-use Maps\MediaWiki\ParserHooks\DisplayMapRenderer;
 use Maps\Presentation\ElementJsonSerializer;
 use Maps\Presentation\WikitextParser;
 use Maps\Presentation\WikitextParsers\LocationParser;
@@ -85,6 +84,21 @@ class MapPrinter extends ResultPrinter {
 		self::$services['map'] = self::$services[$serviceName];
 	}
 
+	private function getParser(): Parser {
+		$parser = $GLOBALS['wgParser'];
+
+		if ( $parser instanceof \StubObject ) {
+			return $parser->_newObject();
+		}
+
+		return $parser;
+	}
+
+	private function getParserClone(): Parser {
+		$parser = $this->getParser();
+		return clone $parser;
+	}
+
 	/**
 	 * Builds up and returns the HTML for the map, with the queried coordinate data on it.
 	 *
@@ -102,7 +116,7 @@ class MapPrinter extends ResultPrinter {
 		$this->locationParser = $factory->newLocationParser();
 		$this->fileUrlFinder = $factory->getFileUrlFinder();
 
-		$this->wikitextParser = new WikitextParser( clone $GLOBALS['wgParser'] );
+		$this->wikitextParser = new WikitextParser( $this->getParserClone() );
 		$this->elementSerializer = new ElementJsonSerializer( $this->wikitextParser );
 
 		$this->addTrackingCategoryIfNeeded();
@@ -127,10 +141,6 @@ class MapPrinter extends ResultPrinter {
 
 		$params['ajaxquery'] = urlencode( $params['ajaxquery'] );
 
-		$this->service->addHtmlDependencies(
-			DisplayMapRenderer::getLayerDependencies( $params['format'], $params )
-		);
-
 		if ( $params['locations'] === [] ) {
 			return $params['default'];
 		}
@@ -141,11 +151,11 @@ class MapPrinter extends ResultPrinter {
 			$params['zoom'] = false;
 		}
 
-		$mapName = $this->service->getMapId();
+		$mapName = $this->service->newMapId();
 
 		SMWOutputs::requireHeadItem(
 			$mapName,
-			$this->service->getDependencyHtml()
+			$this->service->getDependencyHtml( $params )
 		);
 
 		foreach ( $this->service->getResourceModules() as $resourceModule ) {
@@ -345,9 +355,10 @@ class MapPrinter extends ResultPrinter {
 	private function getParameterInfo() {
 		global $smgQPShowTitle, $smgQPTemplate, $smgQPHideNamespace;
 
-		$params = ParamDefinition::getCleanDefinitions( MapsFunctions::getCommonParameters() );
-
-		$this->service->addParameterInfo( $params );
+		$params = array_merge(
+			ParamDefinition::getCleanDefinitions( MapsFunctions::getCommonParameters() ),
+			$this->service->getParameterInfo()
+		);
 
 		$params['staticlocations'] = [
 			'type' => 'mapslocation',

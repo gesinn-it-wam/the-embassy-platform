@@ -8,7 +8,9 @@ use SMW\DIWikiPage;
 use SMW\SemanticData;
 use SMW\SQLStore\SQLStore;
 use SMWQuery as Query;
+use SMW\Options;
 use Title;
+use SMW\SetupFile;
 
 /**
  * @private
@@ -30,6 +32,11 @@ use Title;
  * @author mwjames
  */
 class ElasticStore extends SQLStore {
+
+	/**
+	 * Setup key to verify that the `rebuildElasticIndex.php` has been executed.
+	 */
+	const REBUILD_INDEX_RUN_COMPLETE = 'elastic.rebuild_index_run_complete';
 
 	/**
 	 * @var ElasticFactory
@@ -292,9 +299,20 @@ class ElasticStore extends SQLStore {
 
 		$indices = $this->indexer->setup();
 
-		if ( $verbose ) {
+		if ( $verbose instanceof Options && $verbose->get( 'verbose' ) ) {
+
+			$setupFile = new SetupFile();
+
+			if ( $setupFile->get( ElasticStore::REBUILD_INDEX_RUN_COMPLETE ) === null ) {
+				$setupFile->set(
+					[
+						ElasticStore::REBUILD_INDEX_RUN_COMPLETE => false
+					]
+				);
+			}
+
 			$this->messageReporter->reportMessage( "\n" );
-			$this->messageReporter->reportMessage( 'Selected query engine: "SMWElasticStore"' );
+			$this->messageReporter->reportMessage( 'Query engine: "SMWElasticStore"' );
 			$this->messageReporter->reportMessage( "\n" );
 			$this->messageReporter->reportMessage( "\nSetting up indices ...\n" );
 
@@ -322,9 +340,15 @@ class ElasticStore extends SQLStore {
 
 		$indices = $this->indexer->drop();
 
+		$setupFile = new SetupFile();
+
+		$setupFile->remove(
+			ElasticStore::REBUILD_INDEX_RUN_COMPLETE
+		);
+
 		if ( $verbose ) {
 			$this->messageReporter->reportMessage( "\n" );
-			$this->messageReporter->reportMessage( 'Selected query engine: "SMWElasticStore"' );
+			$this->messageReporter->reportMessage( 'Query engine: "SMWElasticStore"' );
 			$this->messageReporter->reportMessage( "\n" );
 			$this->messageReporter->reportMessage( "\nDropping indices ...\n" );
 

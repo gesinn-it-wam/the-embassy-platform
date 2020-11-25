@@ -26,6 +26,8 @@ use SMW\MediaWiki\MediaWikiNsContentReader;
 use SMW\MediaWiki\PageCreator;
 use SMW\MediaWiki\PageUpdater;
 use SMW\MediaWiki\TitleFactory;
+use SMW\Query\Cache\ResultCache;
+use SMW\Services\DataValueServiceFactory;
 use SMW\MessageFormatter;
 use SMW\NamespaceExaminer;
 use SMW\Parser\LinksProcessor;
@@ -39,23 +41,25 @@ use SMW\PropertySpecificationLookup;
 use SMW\Protection\EditProtectionUpdater;
 use SMW\Protection\ProtectionValidator;
 use SMW\Query\QuerySourceFactory;
-use SMW\Query\Result\CachedQueryResultPrefetcher;
 use SMW\Schema\SchemaFactory;
-use SMW\Property\ConstraintFactory;
+use SMW\ConstraintFactory;
+use SMW\Query\Cache\CacheStats;
+use SMW\QueryFactory;
 use SMW\Settings;
 use SMW\Options;
 use SMW\StoreFactory;
-use SMW\Utils\BufferedStatsdCollector;
+use SMW\Utils\Stats;
 use SMW\Utils\JsonSchemaValidator;
 use SMW\Utils\TempFile;
 use SMW\Elastic\ElasticFactory;
 use SMW\SQLStore\QueryDependencyLinksStoreFactory;
-use SMW\QueryFactory;
 use SMW\Query\Processor\QueryCreator;
 use SMW\Query\Processor\ParamListProcessor;
 use SMW\MediaWiki\IndicatorRegistry;
 use SMW\EntityCache;
 use SMW\DisplayTitleFinder;
+use SMW\Constraint\ConstraintErrorIndicatorProvider;
+use SMW\DependencyValidator;
 
 /**
  * @license GNU GPL v2+
@@ -123,8 +127,23 @@ class SharedServicesContainer implements CallbackContainer {
 	 */
 	public function newIndicatorRegistry( $containerBuilder ) {
 
-		$indicatorRegistry = new IndicatorRegistry();
 		$store = $containerBuilder->singleton( 'Store', null );
+		$settings = $containerBuilder->singleton( 'Settings' );
+
+		$indicatorRegistry = new IndicatorRegistry();
+
+		$constraintErrorIndicatorProvider = new ConstraintErrorIndicatorProvider(
+			$store,
+			$containerBuilder->singleton( 'EntityCache' )
+		);
+
+		$constraintErrorIndicatorProvider->setConstraintErrorCheck(
+			$settings->get( 'smwgCheckForConstraintErrors' )
+		);
+
+		$indicatorRegistry->addIndicatorProvider(
+			$constraintErrorIndicatorProvider
+		);
 
 		try{
 			$indicatorProvider = $store->service( 'IndicatorProvider' );
@@ -162,7 +181,19 @@ class SharedServicesContainer implements CallbackContainer {
 		} );
 
 		$containerBuilder->registerCallback( 'NamespaceExaminer', function() use ( $containerBuilder ) {
-			return NamespaceExaminer::newFromArray( $containerBuilder->singleton( 'Settings' )->get( 'smwgNamespacesWithSemanticLinks' ) );
+
+			$settings = $containerBuilder->singleton( 'Settings' );
+			$namespaceInfo = $containerBuilder->singleton( 'NamespaceInfo' );
+
+			$namespaceExaminer = new NamespaceExaminer(
+				$settings->get( 'smwgNamespacesWithSemanticLinks' )
+			);
+
+			$namespaceExaminer->setValidNamespaces(
+				$namespaceInfo->getValidNamespaces()
+			);
+
+			return $namespaceExaminer;
 		} );
 
 		$containerBuilder->registerCallback( 'ParserData', function( $containerBuilder, \Title $title, \ParserOutput $parserOutput ) {
@@ -527,30 +558,37 @@ class SharedServicesContainer implements CallbackContainer {
 		} );
 
 		/**
-		 * @var CachedQueryResultPrefetcher
+		 * @var ResultCache
 		 */
-		$containerBuilder->registerCallback( 'CachedQueryResultPrefetcher', function( $containerBuilder, $cacheType = null ) {
-			$containerBuilder->registerExpectedReturnType( 'CachedQueryResultPrefetcher', '\SMW\Query\Result\CachedQueryResultPrefetcher' );
+		$containerBuilder->registerCallback( 'ResultCache', function( $containerBuilder, $cacheType = null ) {
+			$containerBuilder->registerExpectedReturnType( 'ResultCache', '\SMW\Query\Cache\ResultCache' );
+
+			$cacheFactory = $containerBuilder->create( 'CacheFactory' );
 
 			$settings = $containerBuilder->singleton( 'Settings' );
 			$cacheType = $cacheType === null ? $settings->get( 'smwgQueryResultCacheType' ) : $cacheType;
 
-			$cachedQueryResultPrefetcher = new CachedQueryResultPrefetcher(
+
+			// Explicitly use the CACHE_DB to access a SqlBagOstuff instance
+			// for a bit more persistence
+			$cacheStats = new CacheStats(
+				$cacheFactory->newMediaWikiCache( CACHE_DB ),
+				ResultCache::STATSD_ID
+			);
+
+			$resultCache = new ResultCache(
 				$containerBuilder->singleton( 'Store', null ),
 				$containerBuilder->singleton( 'QueryFactory' ),
 				$containerBuilder->create(
 					'BlobStore',
-					CachedQueryResultPrefetcher::CACHE_NAMESPACE,
+					ResultCache::CACHE_NAMESPACE,
 					$cacheType,
 					$settings->get( 'smwgQueryResultCacheLifetime' )
 				),
-				$containerBuilder->singleton(
-					'BufferedStatsdCollector',
-					CachedQueryResultPrefetcher::STATSD_ID
-				)
+				$cacheStats
 			);
 
-			$cachedQueryResultPrefetcher->setDependantHashIdExtension(
+			$resultCache->setCacheKeyExtension(
 				// If the mix of dataTypes changes then modify the hash
 				$settings->get( 'smwgFulltextSearchIndexableDataTypes' ) .
 
@@ -563,33 +601,32 @@ class SharedServicesContainer implements CallbackContainer {
 				$settings->get( 'smwgUseComparableContentHash' )
 			);
 
-			$cachedQueryResultPrefetcher->setLogger(
+			$resultCache->setLogger(
 				$containerBuilder->singleton( 'MediaWikiLogger' )
 			);
 
-			$cachedQueryResultPrefetcher->setNonEmbeddedCacheLifetime(
+			$resultCache->setNonEmbeddedCacheLifetime(
 				$settings->get( 'smwgQueryResultNonEmbeddedCacheLifetime' )
 			);
 
-			return $cachedQueryResultPrefetcher;
+			return $resultCache;
 		} );
 
 		/**
-		 * @var BufferedStatsdCollector
+		 * @var Stats
 		 */
-		$containerBuilder->registerCallback( 'BufferedStatsdCollector', function( $containerBuilder, $id ) {
-			$containerBuilder->registerExpectedReturnType( 'BufferedStatsdCollector', '\SMW\Utils\BufferedStatsdCollector' );
+		$containerBuilder->registerCallback( 'Stats', function( $containerBuilder, $id ) {
+			$containerBuilder->registerExpectedReturnType( 'Stats', '\SMW\Utils\Stats' );
+
+			$cacheFactory = $containerBuilder->create( 'CacheFactory' );
 
 			// Explicitly use the DB to access a SqlBagOstuff instance
-			$cacheType = CACHE_DB;
-			$ttl = 0;
-
-			$bufferedStatsdCollector = new BufferedStatsdCollector(
-				$containerBuilder->create( 'BlobStore', BufferedStatsdCollector::CACHE_NAMESPACE, $cacheType, $ttl ),
+			$stats = new Stats(
+				$cacheFactory->newMediaWikiCache( CACHE_DB ),
 				$id
 			);
 
-			return $bufferedStatsdCollector;
+			return $stats;
 		} );
 
 		/**
@@ -736,18 +773,58 @@ class SharedServicesContainer implements CallbackContainer {
 		/**
 		 * @var DisplayTitleFinder
 		 */
-		$containerBuilder->registerCallback( 'DisplayTitleFinder', function( $containerBuilder ) {
+		$containerBuilder->registerCallback( 'DisplayTitleFinder', function( $containerBuilder, $store = null ) {
 			$containerBuilder->registerExpectedReturnType( 'DisplayTitleFinder', '\SMW\DisplayTitleFinder' );
 
-			$lang = Localizer::getInstance()->getLang();
+			$store = $store === null ? $containerBuilder->singleton( 'Store', null ) : $store;
+			$settings = $containerBuilder->singleton( 'Settings' );
 
-			$propertyLabelFinder = new DisplayTitleFinder(
-				$containerBuilder->singleton( 'Store', null ),
+			$displayTitleFinder = new DisplayTitleFinder(
+				$store,
 				$containerBuilder->singleton( 'EntityCache' )
 			);
 
-			return $propertyLabelFinder;
+			$displayTitleFinder->setCanUse(
+				$settings->isFlagSet( 'smwgDVFeatures', SMW_DV_WPV_DTITLE )
+			);
+
+			return $displayTitleFinder;
 		} );
+
+		/**
+		 * @var MagicWordsFinder
+		 */
+		$containerBuilder->registerCallback( 'MagicWordsFinder', function( $containerBuilder, $parserOutput = null ) {
+			$containerBuilder->registerExpectedReturnType( 'MagicWordsFinder', '\SMW\MediaWiki\MagicWordsFinder' );
+
+			$magicWordsFinder = new \SMW\MediaWiki\MagicWordsFinder(
+				$parserOutput,
+				$containerBuilder->singleton( 'MagicWordFactory' )
+			);
+
+			return $magicWordsFinder;
+		} );
+
+		/**
+		 * @var DependencyValidator
+		 */
+		$containerBuilder->registerCallback( 'DependencyValidator', function( $containerBuilder, $store = null ) {
+			$containerBuilder->registerExpectedReturnType( 'DependencyValidator', '\SMW\DependencyValidator' );
+
+			$store = $store === null ? $containerBuilder->singleton( 'Store', null ) : $store;
+			$settings = $containerBuilder->singleton( 'Settings' );
+
+			$queryDependencyLinksStoreFactory = $containerBuilder->singleton( 'QueryDependencyLinksStoreFactory' );
+
+			$dependencyValidator = new DependencyValidator(
+				$containerBuilder->create( 'NamespaceExaminer' ),
+				$queryDependencyLinksStoreFactory->newDependencyLinksValidator(),
+				$containerBuilder->singleton( 'EntityCache' )
+			);
+
+			return $dependencyValidator;
+		} );
+
 	}
 
 }

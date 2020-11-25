@@ -8,6 +8,9 @@ use SMW\DIProperty;
 use SMW\SQLStore\SQLStore;
 use SMWQueryResult as QueryResult;
 use Iterator;
+use SMW\MediaWiki\LinkBatch;
+use SMW\DisplayTitleFinder;
+use SMW\Exception\PredefinedPropertyLabelMismatchException;
 
 /**
  * @license GNU GPL v2+
@@ -21,6 +24,16 @@ class CacheWarmer {
 	 * @var SQLStore
 	 */
 	private $store;
+
+	/**
+	 * @var IdCacheManager
+	 */
+	private $idCacheManager;
+
+	/**
+	 * @var DisplayTitleFinder
+	 */
+	private $displayTitleFinder;
 
 	/**
 	 * @var integer
@@ -41,6 +54,15 @@ class CacheWarmer {
 	/**
 	 * @since 3.1
 	 *
+	 * @param DisplayTitleFinder $displayTitleFinder
+	 */
+	public function setDisplayTitleFinder( DisplayTitleFinder $displayTitleFinder ) {
+		$this->displayTitleFinder = $displayTitleFinder;
+	}
+
+	/**
+	 * @since 3.1
+	 *
 	 * @param integer $thresholdLimit
 	 */
 	public function setThresholdLimit( $thresholdLimit ) {
@@ -55,6 +77,8 @@ class CacheWarmer {
 	public function fillFromList( $list = [] ) {
 
 		$hashList = [];
+		$linkBatch = LinkBatch::singleton();
+		$linkBatch->setCaller( __METHOD__ );
 
 		if ( $list instanceof QueryResult ) {
 			$list = $list->getResults();
@@ -69,13 +93,20 @@ class CacheWarmer {
 			$hash = null;
 
 			if ( $item instanceof DIWikiPage ) {
+				$linkBatch->add( $item );
+
 				if ( $item->getNamespace() === SMW_NS_PROPERTY ) {
-					$property = DIProperty::newFromUserLabel( $item->getDBKey() );
+					try {
+						$property = DIProperty::newFromUserLabel( $item->getDBKey() );
+					} catch ( PredefinedPropertyLabelMismatchException $e ) {
+						continue;
+					}
 					$hash = $item->getSha1();
 				} else {
 					$hash = $item->getSha1();
 				}
 			} elseif ( $item instanceof DIProperty ) {
+				$linkBatch->add( $item->getDIWikiPage() );
 
 				// Avoid _SKEY as it is not used during an entity lookup to
 				// match an ID
@@ -93,7 +124,12 @@ class CacheWarmer {
 			$hashList[$hash] = true;
 		}
 
-		$this->fillFromTableByHash( array_keys( $hashList ) );
+		$linkBatch->execute();
+		$this->loadByHash( array_keys( $hashList ) );
+
+		if ( $this->displayTitleFinder !== null ) {
+			$this->displayTitleFinder->prefetchFromList( $list );
+		}
 	}
 
 	/**
@@ -101,7 +137,7 @@ class CacheWarmer {
 	 *
 	 * @param array $hashList
 	 */
-	public function fillFromTableByHash( $hashList = [] ) {
+	public function loadByHash( $hashList = [] ) {
 
 		if ( $hashList === [] ) {
 			return;
@@ -154,7 +190,7 @@ class CacheWarmer {
 	 *
 	 * @param array $idList
 	 */
-	public function fillFromTableIds( $idList = [] ) {
+	public function loadByIds( $idList = [] ) {
 
 		if ( $idList === [] ) {
 			return;

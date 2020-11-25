@@ -35,4 +35,42 @@ class FileFetcherRoundTripTest extends \PHPUnit_Framework_TestCase {
 		$this->assertTrue( $found );
 	}
 
+	public function testRoundTrip_Sort_Asc() {
+
+		$fileFetcher = new FileFetcher(
+			FileFetcher::normalize( __DIR__ . '/../../Fixtures/Utils/' )
+		);
+
+		$fileFetcher->sort( 'asc' );
+
+		$files = $fileFetcher->findByExtension( 'json' );
+
+		$this->assertEquals(
+			[
+				[ FileFetcher::normalize( __DIR__ . '/../../Fixtures/Utils/aaa.json' ) ],
+				[ FileFetcher::normalize( __DIR__ . '/../../Fixtures/Utils/zzz.json' ) ]
+			],
+			$files
+		);
+	}
+
+	public function testRoundTrip_Sort_Desc() {
+
+		$fileFetcher = new FileFetcher(
+			FileFetcher::normalize( __DIR__ . '/../../Fixtures/Utils/' )
+		);
+
+		$fileFetcher->sort( 'desc' );
+
+		$files = $fileFetcher->findByExtension( 'json' );
+
+		$this->assertEquals(
+			[
+				[ FileFetcher::normalize( __DIR__ . '/../../Fixtures/Utils/zzz.json' ) ],
+				[ FileFetcher::normalize( __DIR__ . '/../../Fixtures/Utils/aaa.json' ) ]
+			],
+			$files
+		);
+	}
+
 }

@@ -4,6 +4,7 @@ namespace SMW\SQLStore\Rebuilder;
 
 use SMW\SQLStore\SQLStore;
 use SMW\NamespaceExaminer;
+use SMW\MediaWiki\RevisionGuard;
 use Title;
 
 /**
@@ -142,6 +143,49 @@ class EntityValidator {
 	/**
 	 * @since 3.1
 	 *
+	 * @param $title
+	 * @param $row
+	 *
+	 * @return boolean
+	 */
+	public function isDetachedSubobject( $title, $row ) {
+
+		if ( $row->smw_subobject === '' ) {
+			return false;
+		}
+
+		// Has subobject or fragment but doesn't contain a `proptable` map
+		// so it is conceived to represent something like `[[Has page::Foo#bar]]`
+		if ( $row->smw_proptable_hash === null ) {
+			return false;
+		}
+
+		// Is it a detached subobject? Meaning without a real page (for example
+		// created by a page preview etc.)
+		return $title !== null && !$title->exists();
+	}
+
+	/**
+	 * @since 3.1
+	 *
+	 * @param $row
+	 *
+	 * @return boolean
+	 */
+	public function isDetachedQueryRef( $row ) {
+
+		if ( $row->smw_subobject === '' || $row->smw_proptable_hash !== null ) {
+			return false;
+		}
+
+		// Any query reference without a `proptable` map is considered
+		// detached (doesn't belong to any subject, or is outdated)
+		return substr( $row->smw_subobject, 0, 6 ) === \SMWQuery::ID_PREFIX;
+	}
+
+	/**
+	 * @since 3.1
+	 *
 	 * @param $row
 	 *
 	 * @return boolean
@@ -158,7 +202,7 @@ class EntityValidator {
 			$row->smw_iw != SMW_SQL3_SMWIW_OUTDATED &&
 			// Leave any pre-defined property (_...) untouched
 			$row->smw_title != '' &&
-			$row->smw_title{0} != '_' &&
+			$row->smw_title[0] != '_' &&
 			// smw_proptable_hash === null means it is not a subject but an object value
 			$row->smw_proptable_hash === null;
 	}
@@ -202,7 +246,7 @@ class EntityValidator {
 
 			// Check if both make a reference to a predefined representation
 			// and if not, skip
-			if ( $v{0} === '_' && $row->smw_title{0} !== '_' ) {
+			if ( $v[0] === '_' && $row->smw_title[0] !== '_' ) {
 				continue;
 			}
 
@@ -258,7 +302,7 @@ class EntityValidator {
 	 */
 	public function hasLatestRevID( Title $title, $row = false ) {
 
-		$latestRevID = $title->getLatestRevID( Title::GAID_FOR_UPDATE );
+		$latestRevID = RevisionGuard::getLatestRevID( $title );
 
 		if ( $row !== false ) {
 			return $latestRevID == $row->smw_rev;

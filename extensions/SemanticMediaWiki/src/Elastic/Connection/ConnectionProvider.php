@@ -4,11 +4,11 @@ namespace SMW\Elastic\Connection;
 
 use Elasticsearch\ClientBuilder;
 use SMW\Elastic\Exception\ClientBuilderNotFoundException;
+use SMW\Elastic\Exception\MissingEndpointConfigException;
 use SMW\ApplicationFactory;
 use SMW\Connection\ConnectionProvider as IConnectionProvider;
 use SMW\Options;
 use Psr\Log\LoggerAwareTrait;
-use Onoi\Cache\Cache;
 
 /**
  * @private
@@ -23,7 +23,7 @@ class ConnectionProvider implements IConnectionProvider {
 	use LoggerAwareTrait;
 
 	/**
-	 * @var Cache
+	 * @var LockManager
 	 */
 	private $lockManager;
 
@@ -61,8 +61,14 @@ class ConnectionProvider implements IConnectionProvider {
 			return $this->connection;
 		}
 
+		$endpoints = $this->options->safeGet( 'endpoints', [] );
+
+		if ( !$this->hasEndpoints( $endpoints ) ) {
+			throw new MissingEndpointConfigException();
+		}
+
 		$params = [
-			'hosts' => $this->options->get( 'endpoints' ),
+			'hosts' => $endpoints,
 			'retries' => $this->options->dotGet( 'connection.retries', 1 ),
 
 			'client' => [
@@ -80,25 +86,20 @@ class ConnectionProvider implements IConnectionProvider {
 		];
 
 		if ( $this->hasAvailableClientBuilder() ) {
-			$this->connection = $this->newClient( ClientBuilder::fromConfig( $params, true ) );
+			$clientBuilder = ClientBuilder::fromConfig( $params, true );
 		} else {
-			$this->connection = new DummyClient();
+			$clientBuilder = null;
 		}
+
+		$this->connection = $this->newClient( $clientBuilder );
 
 		$this->connection->setLogger(
 			$this->logger
 		);
 
 		$this->logger->info(
-			[
-				'Connection',
-				'{provider} : {hosts}'
-			],
-			[
-				'role' => 'developer',
-				'provider' => 'elastic',
-				'hosts' => $params['hosts']
-			]
+			[ 'Connection', '{provider} : {hosts}' ],
+			[ 'role' => 'developer', 'provider' => 'elastic', 'hosts' => $params['hosts'] ]
 		);
 
 		return $this->connection;
@@ -113,8 +114,29 @@ class ConnectionProvider implements IConnectionProvider {
 		$this->connection = null;
 	}
 
-	private function newClient( $clientBuilder ) {
+	private function newClient( $clientBuilder = null ) {
+
+		if ( $clientBuilder === null ) {
+			return new DummyClient();
+		}
+
+		// For unit/integration tests use a special `TestClient` to force a refresh
+		// hereby make results immediately available on some actions before
+		// the actual request is transmitted to the `Client`
+		if ( defined( 'MW_PHPUNIT_TEST' ) ) {
+			return new TestClient( $clientBuilder, $this->lockManager, $this->options );
+		}
+
 		return new Client( $clientBuilder, $this->lockManager, $this->options );
+	}
+
+	private function hasEndpoints( $endpoints ) {
+
+		if ( $this->options->dotGet( 'is.elasticstore', false ) === false ) {
+			return true;
+		}
+
+		return $endpoints !== [];
 	}
 
 	private function hasAvailableClientBuilder() {

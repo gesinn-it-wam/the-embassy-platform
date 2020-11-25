@@ -7,6 +7,7 @@ use ParserOptions;
 use ParserOutput;
 use Psr\Log\LoggerAwareTrait;
 use SMWDataValue as DataValue;
+use SMW\MediaWiki\RevisionGuard;
 use Title;
 
 /**
@@ -213,6 +214,15 @@ class ParserData {
 	 * @return boolean
 	 */
 	public function isBlocked() {
+		return $this->hasAnnotationBlock();
+	}
+
+	/**
+	 * @since 3.1
+	 *
+	 * @return boolean
+	 */
+	public function hasAnnotationBlock() {
 
 		// ParserOutput::getExtensionData returns null if no value was set for this key
 		if ( $this->parserOutput->getExtensionData( self::ANNOTATION_BLOCK ) !== null &&
@@ -229,7 +239,7 @@ class ParserData {
 	 * @return boolean
 	 */
 	public function canUse() {
-		return !$this->isBlocked();
+		return !$this->hasAnnotationBlock();
 	}
 
 	/**
@@ -418,7 +428,7 @@ class ParserData {
 
 			$this->logger->info(
 				[ 'Update', 'Skipping update', 'Found revision', '{revID}' ],
-				[ 'role' => 'user', 'revID' => $this->title->getLatestRevID( Title::GAID_FOR_UPDATE ) ]
+				[ 'role' => 'user', 'revID' => RevisionGuard::getLatestRevID( $this->title ) ]
 			);
 
 			return false;

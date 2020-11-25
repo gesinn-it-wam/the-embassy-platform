@@ -22,14 +22,14 @@
 		// History
 		// { include: [ 'undo', 'redo' ] },
 		// Format
-		{
+		/*{
 			header: OO.ui.deferMsg( 'visualeditor-toolbar-paragraph-format' ),
 			title: OO.ui.deferMsg( 'visualeditor-toolbar-format-tooltip' ),
 			type: 'menu',
 			include: [ { group: 'format' } ],
 			promote: [ 'paragraph' ],
 			demote: [ 'preformatted', 'blockquote' ]
-		},
+		},*/
 		// Text style
 		{
 			header: OO.ui.deferMsg( 'visualeditor-toolbar-text-style' ),

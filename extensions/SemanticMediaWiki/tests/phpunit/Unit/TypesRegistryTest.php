@@ -73,21 +73,28 @@ class TypesRegistryTest extends \PHPUnit_Framework_TestCase {
 	 * @dataProvider typeList
 	 */
 	public function testTypeList_FirstCharUnderscore( $key, $def ) {
-		$this->assertTrue( $key{0} === '_' );
+		$this->assertTrue( $key[0] === '_' );
 	}
 
 	/**
 	 * @dataProvider typeList
 	 */
 	public function testTypeList_ClassExists( $key, $def ) {
-		$this->assertTrue( class_exists( $def[0] ) );
+
+		$class = $def[0];
+
+		if ( is_array( $class ) ) {
+			$this->assertTrue( is_callable( $class ) );
+		} else {
+			$this->assertTrue( class_exists( $class ) );
+		}
 	}
 
 	/**
 	 * @dataProvider propertyList
 	 */
 	public function testPropertyList_FirstCharUnderscore( $key, $def ) {
-		$this->assertTrue( $key{0} === '_' );
+		$this->assertTrue( $key[0] === '_' );
 	}
 
 	public function typeList() {

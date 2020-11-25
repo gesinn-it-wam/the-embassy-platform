@@ -7,6 +7,9 @@ use SMW\DIProperty;
 use SMW\DIWikiPage;
 use SMW\ProcessingErrorMsgHandler;
 use SMW\PropertyAnnotator;
+use SMW\DataValueFactory;
+use SMW\SemanticData;
+use SMW\Parser\AnnotationProcessor;
 
 /**
  * Handling category annotation
@@ -102,11 +105,12 @@ class CategoryPropertyAnnotator extends PropertyAnnotatorDecorator {
 	 */
 	protected function addPropertyValues() {
 
-		$namespace = $this->getSemanticData()->getSubject()->getNamespace();
+		$subject = $this->getSemanticData()->getSubject();
+		$namespace = $subject->getNamespace();
 		$property = null;
 
 		$this->processingErrorMsgHandler = new ProcessingErrorMsgHandler(
-			$this->getSemanticData()->getSubject()
+			$subject
 		);
 
 		if ( $this->useCategoryInstance && ( $namespace !== NS_CATEGORY ) ) {
@@ -117,25 +121,49 @@ class CategoryPropertyAnnotator extends PropertyAnnotatorDecorator {
 			$property = new DIProperty( DIProperty::TYPE_SUBCATEGORY );
 		}
 
+		$semanticData = $this->getSemanticData();
+
+		$annotationProcessor = new AnnotationProcessor(
+			$semanticData,
+			DataValueFactory::getInstance()
+		);
+
 		foreach ( $this->categories as $catname ) {
 
 			if ( ( !$this->showHiddenCategories && $this->isHiddenCategory( $catname ) ) || $property === null ) {
 				continue;
 			}
 
-			$this->modifySemanticData( $property, $catname );
+			$this->modifySemanticData( $semanticData, $annotationProcessor, $subject, $property, $catname );
 		}
+
+		$annotationProcessor->release();
 	}
 
-	private function modifySemanticData( $property, $catname ) {
+	private function modifySemanticData( $semanticData, $annotationProcessor, $subject, $property, $catname ) {
 
 		$cat = new DIWikiPage( $catname, NS_CATEGORY );
 
 		if ( ( $cat = $this->getRedirectTarget( $cat ) ) && $cat->getNamespace() === NS_CATEGORY ) {
-			return $this->getSemanticData()->addPropertyObjectValue(
+
+			$dataValue = $annotationProcessor->newDataValueByItem(
+				$cat,
 				$property,
+				false,
+				$subject
+			);
+
+			// Explicitly run a check here since the annotation process is run after
+			// any visible output to the user hereby ensure that violations are caught
+			// by the constraint error lookup
+			$dataValue->checkConstraints();
+
+			$semanticData->addPropertyObjectValue(
+				$dataValue->getProperty(),
 				$cat
 			);
+
+			return $semanticData->addDataValue( $dataValue );
 		}
 
 		$container = $this->processingErrorMsgHandler->newErrorContainerFromMsg(
@@ -146,7 +174,7 @@ class CategoryPropertyAnnotator extends PropertyAnnotatorDecorator {
 		);
 
 		$this->processingErrorMsgHandler->addToSemanticData(
-			$this->getSemanticData(),
+			$semanticData,
 			$container
 		);
 	}

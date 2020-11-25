@@ -94,7 +94,7 @@ class SchemaFactory {
 	 *
 	 * @param Schema|null $schema
 	 */
-	public function pushPossibleChangePropagationDispatchJob( Schema $schema = null ) {
+	public function pushChangePropagationDispatchJob( Schema $schema = null ) {
 
 		if ( $schema === null ) {
 			return;
@@ -107,7 +107,7 @@ class SchemaFactory {
 		}
 
 		if ( !is_array( $type['change_propagation'] ) ) {
-			throw new SchemaParameterTypeMismatchException( 'change_propagation', 'array' );
+			$type['change_propagation'] = (array)$type['change_propagation'];
 		}
 
 		$subject = DIWikiPage::newFromText( $schema->getName(), SMW_NS_SCHEMA );
@@ -141,7 +141,7 @@ class SchemaFactory {
 		}
 
 		$type = null;
-		$validation_schema = null;
+		$info = [];
 
 		if ( isset( $data['type'] ) ) {
 			$type = $data['type'];
@@ -152,13 +152,13 @@ class SchemaFactory {
 		}
 
 		if ( isset( $this->schemaTypes[$type]['validation_schema'] ) ) {
-			$validation_schema = $this->schemaTypes[$type]['validation_schema'];
+			$info[Schema::SCHEMA_VALIDATION_FILE] = $this->schemaTypes[$type]['validation_schema'];
 		}
 
 		if ( isset( $this->schemaTypes[$type]['__factory'] ) && is_callable( $this->schemaTypes[$type]['__factory'] ) ) {
-			$schema = $this->schemaTypes[$type]['__factory']( $name, $data );
+			$schema = $this->schemaTypes[$type]['__factory']( $name, $data, $info );
 		} else {
-			$schema = new SchemaDefinition( $name, $data, $validation_schema );
+			$schema = new SchemaDefinition( $name, $data, $info );
 		}
 
 		if ( !$schema instanceof Schema ) {
@@ -175,14 +175,21 @@ class SchemaFactory {
 	/**
 	 * @since 3.1
 	 *
-	 * @param Store $store
+	 * @param Store|null $store
 	 *
 	 * @return SchemaFinder
 	 */
-	public function newSchemaFinder( Store $store ) {
+	public function newSchemaFinder( Store $store = null ) {
+
+		$applicationFactory = ApplicationFactory::getInstance();
+
+		if ( $store === null ) {
+			$store = $applicationFactory->getStore();
+		}
+
 		return new SchemaFinder(
 			$store,
-			ApplicationFactory::getInstance()->getPropertySpecificationLookup()
+			$applicationFactory->getPropertySpecificationLookup()
 		);
 	}
 

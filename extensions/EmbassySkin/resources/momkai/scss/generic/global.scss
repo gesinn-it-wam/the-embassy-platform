@@ -1,0 +1,167 @@
+* {
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+html,
+body {
+  height: 100%;
+  min-height: 100%;
+}
+
+body {
+  overflow-x: hidden;
+  margin: 0;
+  background-color: $te-white;
+}
+
+body.is-homepageblue {
+  background-color: $te-homepage-background;
+}
+
+body.is-verylightblue,
+body.is-homepage {
+  background-color: $te-verylightblue;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  border-bottom: none; // avoid MW border
+}
+
+h1 {
+  font-size: rem-calc(30);
+  line-height: rem-calc(36);
+
+  @include media-breakpoint-up(lg) {
+    font-size: rem-calc(54);
+    line-height: rem-calc(67);
+  }
+}
+
+// Bigger h1 headers for these pages
+.page-Themes,
+.page-Resources,
+.page-Training,
+.page-Guides,
+.page-Instructions,
+.page-About,
+.page-Founders,
+.page-Contributors {
+  h1 {
+    @include media-breakpoint-up(lg) {
+      font-size: rem-calc(64);
+      line-height: rem-calc(77);
+    }
+  }
+}
+
+// h1 title offset for detail pages
+body[class*="mw-special-FormEdit"],
+body[class*="page-Resource_"],
+body[class*="page-Instruction_"],
+body[class*="page-Theme_"],
+body[class*="page-About"],
+body[class*="page-Contributors"],
+body[class*="page-Founders"] {
+  font-size: rem-calc(18);
+  line-height: unitless-calc(30, 18);
+
+  h1 {
+    margin-top: -15px;
+  }
+}
+
+
+ul, ol, p {
+  margin-bottom: map_get($paragraph-bottom-margins, sm);
+
+  @include media-breakpoint-up(md) {
+    margin-bottom: map_get($paragraph-bottom-margins, md);
+  }
+
+  @include media-breakpoint-up(lg) {
+    margin-bottom: map_get($paragraph-bottom-margins, lg);
+  }
+
+  @include media-breakpoint-up(lg) {
+    margin-bottom: map_get($paragraph-bottom-margins, xl);
+  }
+}
+
+ul, ol {
+  list-style: none;
+  padding-left: 0;
+}
+
+ul {
+  li {
+    margin-bottom: 25px;
+    padding-left: 25px;
+    font-size: rem-calc(18);
+    line-height: rem-calc(24);
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath fill='%23BCD5DA' fill-rule='evenodd' d='M0 0v12h6l6-6v-.0001L6 0z'/%3E%3C/svg%3E") no-repeat 0 6px;
+    background-size: 12px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+ol {
+  counter-reset: te-counter;
+
+  li {
+    margin-bottom: 25px;
+    counter-increment: te-counter;
+    font-size: rem-calc(18);
+    line-height: rem-calc(24);
+
+    &::before {
+      padding-right: 9px;
+      content: counter(te-counter) '. ';
+      font-weight: bold;
+      color: $te-lightblue;
+    }
+  }
+}
+
+b, strong {
+  font-family: $font-headings-bold;
+}
+
+a[href].new,
+a[href].external {
+  color: $te-blue;
+}
+
+body.layout-sidebar {
+  main.content {
+    padding-top: 100px;
+
+    @include media-breakpoint-up(lg) {
+      padding-top: 0;
+    }
+  }
+
+  // background color sidebar to fill out on right side of sidebar on large screen
+  // Previous solution caused horizontal scrollbar
+  @include media-breakpoint-up(lg) {
+    background-image: linear-gradient(white, white),
+    linear-gradient(white, white),
+    linear-gradient(white, white),
+    linear-gradient($te-homepage-background);
+
+    background-image: -webkit-gradient(linear, left top, left bottom, from(white), to(white)), -webkit-gradient(linear, left top, left bottom, from(white), to(white)), -webkit-gradient(linear, left top, left bottom, from(white), to(white)), -webkit-gradient(linear, left top, left bottom, from($te-homepage-background));
+
+    background-size: calc(1 * (100% / 4)) 100%,
+    calc(2 * (100% / 4)) 100%,
+    calc(3 * (100% / 4)) 100%,
+    calc(4 * (100% / 4)) 100%;
+    background-repeat: repeat-y;
+  }
+}

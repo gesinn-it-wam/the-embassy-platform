@@ -1,0 +1,37 @@
+// Multiple Instance templates are not dragable because input fields are overlapping the right bar
+// the following css modification should fix this
+div.sfFieldRow {
+  margin-left: 0;
+}
+
+div.sfFieldLabel, div.sfFieldContent {
+  padding-left: 0;
+}
+
+// Hide references inside textarea on form edit
+.sfFieldContent .mw-references.ve-ce-leafNode.ve-ce-focusableNode.ve-ce-mwReferencesListNode,
+.sfFieldContent .mw-references-wrap.ve-ce-leafNode.ve-ce-focusableNode.ve-ce-mwReferencesListNode{
+  display: none;
+}
+
+//overwrite with of input field dropdown
+#pfForm select {
+  width:100% !important;
+}
+
+// Remove Last pass icon
+div[id^=__lpform_] {
+  display: none;
+}
+
+input.noLastPassStyle {
+  background-image:none !important;
+}
+div.sfFieldRow:not(.mandatoryInput) div.sfFieldLabel span.simple-tooltip-inline:after{
+  content:' (optional)';
+}
+
+// Hide Modle-Names that are not needed
+div#wrapper-Instruction_Remarks_Trainee .panel-heading, div#wrapper-Instruction_Remarks_Trainer .panel-heading{
+  display: none;
+}

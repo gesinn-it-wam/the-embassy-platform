@@ -64,6 +64,13 @@ class DummyClient extends Client {
 	}
 
 	/**
+	 * @see Client::getIndexNameByType
+	 */
+	public function getIndexNameByType( $type ) {
+		return $this->getIndexName( $type );
+	}
+
+	/**
 	 * @see Client::getIndexName
 	 */
 	public function getIndexName( $type ) {
@@ -238,6 +245,18 @@ class DummyClient extends Client {
 	public function explain( array $params ) {
 		return [];
 	}
+
+	/**
+	 * @see Client::hasMaintenanceLock
+	 */
+	public function hasMaintenanceLock() {
+		return false;
+	}
+
+	/**
+	 * @see Client::setMaintenanceLock
+	 */
+	public function setMaintenanceLock() {}
 
 	/**
 	 * @see Client::setLock

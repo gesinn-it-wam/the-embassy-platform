@@ -4,7 +4,6 @@ namespace SMW\Tests;
 
 use SMW\SetupFile;
 use SMW\Utils\File;
-use SMW\Tests\TestEnvironment;
 
 /**
  * @covers \SMW\SetupFile
@@ -16,13 +15,6 @@ use SMW\Tests\TestEnvironment;
  * @author mwjames
  */
 class SetupFileTest extends \PHPUnit_Framework_TestCase {
-
-	private $spyMessageReporter;
-
-	protected function setUp() {
-		parent::setUp();
-		$this->spyMessageReporter = TestEnvironment::getUtilityFactory()->newSpyMessageReporter();
-	}
 
 	public function testIsGoodSchema() {
 
@@ -36,16 +28,20 @@ class SetupFileTest extends \PHPUnit_Framework_TestCase {
 
 		$var1 = [
 			'smwgUpgradeKey' => '',
+			'smwgDefaultStore' => '',
 			'smwgEnabledFulltextSearch' => '',
 			'smwgFixedProperties' => [ 'Foo', 'Bar' ],
-			'smwgPageSpecialProperties' => [ 'Foo', 'Bar' ]
+			'smwgPageSpecialProperties' => [ 'Foo', 'Bar' ],
+			'smwgFieldTypeFeatures' => false
 		];
 
 		$var2 = [
 			'smwgUpgradeKey' => '',
+			'smwgDefaultStore' => '',
 			'smwgEnabledFulltextSearch' => '',
 			'smwgFixedProperties' => [ 'Bar', 'Foo' ],
-			'smwgPageSpecialProperties' => [ 'Bar', 'Foo' ]
+			'smwgPageSpecialProperties' => [ 'Bar', 'Foo' ],
+			'smwgFieldTypeFeatures' => false
 		];
 
 		$this->assertEquals(
@@ -58,16 +54,20 @@ class SetupFileTest extends \PHPUnit_Framework_TestCase {
 
 		$var1 = [
 			'smwgUpgradeKey' => '',
+			'smwgDefaultStore' => '',
 			'smwgEnabledFulltextSearch' => '',
 			'smwgFixedProperties' => [ 'Foo', 'Bar' ],
-			'smwgPageSpecialProperties' => [ 'Foo', 'Bar' ]
+			'smwgPageSpecialProperties' => [ 'Foo', 'Bar' ],
+			'smwgFieldTypeFeatures' => false
 		];
 
 		$var2 = [
 			'smwgUpgradeKey' => '',
+			'smwgDefaultStore' => '',
 			'smwgEnabledFulltextSearch' => '',
 			'smwgFixedProperties' => [ 'Bar', 'Foo' ],
-			'smwgPageSpecialProperties' => [ 'Bar', '_MDAT' ]
+			'smwgPageSpecialProperties' => [ 'Bar', '_MDAT' ],
+			'smwgFieldTypeFeatures' => false
 		];
 
 		$this->assertNotEquals(
@@ -76,7 +76,7 @@ class SetupFileTest extends \PHPUnit_Framework_TestCase {
 		);
 	}
 
-	public function testSetUpgradeKey() {
+	public function testFinalize() {
 
 		$file = $this->getMockBuilder( '\SMW\Utils\File' )
 			->disableOriginalConstructor()
@@ -93,20 +93,21 @@ class SetupFileTest extends \PHPUnit_Framework_TestCase {
 			'smwgConfigFileDir' => 'Foo/',
 			'smwgIP' => '',
 			'smwgUpgradeKey' => '',
+			'smwgDefaultStore' => '',
 			'smwgEnabledFulltextSearch' => '',
 			'smwgFixedProperties' => [],
-			'smwgPageSpecialProperties' => []
+			'smwgPageSpecialProperties' => [],
+			'smwgFieldTypeFeatures' => false
 		];
 
-		$instance->setMessageReporter( $this->spyMessageReporter );
-		$instance->setUpgradeKey( $vars );
+		$instance->finalize( $vars );
 	}
 
 	public function testSetMaintenanceMode() {
 
 		$fields = [
-			'upgrade_key' => 'abede9f6b2c43db901f6255e26b8d951f84f5d7c',
-			'in.maintenance_mode' => true,
+			'upgrade_key' => '7540cc7b594b305fa2525c33d8963acb0c2d7b29',
+			SetupFile::MAINTENANCE_MODE => true,
 			// "upgrade_key_base" => '["",[],"",[]]'
 		];
 
@@ -130,12 +131,14 @@ class SetupFileTest extends \PHPUnit_Framework_TestCase {
 			'smwgConfigFileDir' => 'Foo/',
 			'smwgIP' => '',
 			'smwgUpgradeKey' => '',
+			'smwgDefaultStore' => '',
 			'smwgEnabledFulltextSearch' => '',
 			'smwgFixedProperties' => [],
-			'smwgPageSpecialProperties' => []
+			'smwgPageSpecialProperties' => [],
+			'smwgFieldTypeFeatures' => false
 		];
 
-		$instance->setMaintenanceMode( $vars );
+		$instance->setMaintenanceMode( true, $vars );
 	}
 
 	public function testSetUpgradeFile() {
@@ -167,12 +170,105 @@ class SetupFileTest extends \PHPUnit_Framework_TestCase {
 			'smwgConfigFileDir' => 'Foo_dir',
 			'smwgIP' => '',
 			'smwgUpgradeKey' => '',
+			'smwgDefaultStore' => '',
+			'smwgEnabledFulltextSearch' => '',
+			'smwgFixedProperties' => [],
+			'smwgPageSpecialProperties' => [],
+			'smwgFieldTypeFeatures' => false
+		];
+
+		$instance->write( [ 'Foo' => 42 ], $vars );
+	}
+
+	public function testReset() {
+
+		$configFile = File::dir( 'Foo_dir/.smw.json' );
+		$id = \SMW\Site::id();
+
+		$fields = [
+			'Foo' => 42
+		];
+
+		$expected = json_encode( [ $id => [] ], JSON_PRETTY_PRINT );
+
+		$file = $this->getMockBuilder( '\SMW\Utils\File' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$file->expects( $this->once() )
+			->method( 'write' )
+			->with(
+				$this->equalTo( $configFile ),
+				$this->equalTo( $expected ) );
+
+		$instance = new SetupFile(
+			$file
+		);
+
+		$vars = [
+			'smwgConfigFileDir' => 'Foo_dir',
+			'smwgIP' => '',
+			'smwgUpgradeKey' => '',
+			'smwgEnabledFulltextSearch' => '',
+			'smwgFixedProperties' => [],
+			'smwgPageSpecialProperties' => [],
+			'smw.json' => [ $id => $fields ]
+		];
+
+		$instance->reset( $vars );
+	}
+
+	public function testRemove() {
+
+		$configFile = File::dir( 'Foo_dir/.smw.json' );
+		$expected = '[]';
+
+		$file = $this->getMockBuilder( '\SMW\Utils\File' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$file->expects( $this->once() )
+			->method( 'write' )
+			->with(
+				$this->equalTo( $configFile ),
+				$this->equalTo( $expected ) );
+
+		$instance = new SetupFile(
+			$file
+		);
+
+		$vars = [
+			'smwgConfigFileDir' => 'Foo_dir',
+			'smwgIP' => '',
+			'smwgUpgradeKey' => 'bar',
 			'smwgEnabledFulltextSearch' => '',
 			'smwgFixedProperties' => [],
 			'smwgPageSpecialProperties' => []
 		];
 
-		$instance->write( $vars, [ 'Foo' => 42 ] );
+		$instance->remove( 'Foo', $vars );
+	}
+
+	public function testGet() {
+
+		$id = \SMW\Site::id();
+
+		$file = $this->getMockBuilder( '\SMW\Utils\File' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$instance = new SetupFile(
+			$file
+		);
+
+		$vars = [
+			'smw.json' => [ $id => [ 'Foo' => 42 ] ]
+		];
+
+		$this->assertEquals(
+			42,
+			$instance->get( 'Foo', $vars )
+		);
 	}
 
 	public function testIncompleteTasks() {

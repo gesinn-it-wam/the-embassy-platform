@@ -109,10 +109,10 @@ class SemanticResultFormats {
 			'eventline' => 'SRFTimeline',
 			'vcard' => 'SRF\vCard\vCardFileExportPrinter',
 			'icalendar' => 'SRF\iCalendar\iCalendarFileExportPrinter',
-			'bibtex' => 'SRFBibTeX',
+			'bibtex' => 'SRF\BibTex\BibTexFileExportPrinter',
 			'calendar' => 'SRFCalendar',
 			'eventcalendar' => 'SRF\EventCalendar',
-			'outline' => 'SRFOutline',
+			'outline' => 'SRF\Outline\OutlineResultPrinter',
 			'sum' => 'SRFMath',
 			'product' => 'SRFMath',
 			'average' => 'SRFMath',
@@ -125,7 +125,7 @@ class SemanticResultFormats {
 			'jitgraph' => 'SRFJitGraph',
 			'jqplotchart' => 'SRFjqPlotChart',
 			'jqplotseries' => 'SRFjqPlotSeries',
-			'graph' => 'SRFGraph',
+			'graph' => 'SRF\Graph\GraphPrinter',
 			'process' => 'SRFProcess',
 			'gallery' => 'SRF\Gallery',
 			'tagcloud' => 'SRF\TagCloud',
@@ -147,8 +147,8 @@ class SemanticResultFormats {
 			'dygraphs' => 'SRFDygraphs',
 			'incoming' => 'SRFIncoming',
 			'media' => 'SRF\MediaPlayer',
-			'excel' => 'SRF\SRFExcel',
-			'datatables' => 'SRF\DataTables'
+			'datatables' => 'SRF\DataTables',
+			'gantt' => 'SRF\Gantt\GanttPrinter'
 		];
 
 		$formatAliases = [
@@ -160,6 +160,11 @@ class SemanticResultFormats {
 			'jqplotchart' => [ 'jqplot chart', 'jqplotpie', 'jqplotbar' ],
 			'jqplotseries' => [ 'jqplot series' ],
 		];
+
+		if ( class_exists( '\PhpOffice\PhpSpreadsheet\Spreadsheet' ) ) {
+			$formatClasses['spreadsheet'] = 'SRF\SpreadsheetPrinter';
+			$formatAliases['spreadsheet'] = [ 'excel' ];
+		}
 
 		foreach ( $GLOBALS['srfgFormats'] as $format ) {
 			if ( array_key_exists( $format, $formatClasses ) ) {

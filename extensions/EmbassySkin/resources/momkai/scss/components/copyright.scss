@@ -1,0 +1,16 @@
+.copyright {
+  display: block;
+  width: 100%;
+  margin: 40px 0;
+  border-top: solid 1px $te-verylightblue;
+
+  p {
+    padding-top: 30px;
+    font-size: rem-calc(16);
+    line-height: unitless-calc(28, 16);
+
+    b {
+      font-family: $te-font-bold;
+    }
+  }
+}

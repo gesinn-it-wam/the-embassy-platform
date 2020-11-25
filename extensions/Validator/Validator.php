@@ -33,17 +33,18 @@ $GLOBALS['wgExtensionFunctions'][] = function () {
 	}
 
 	// Display extension information
-	$GLOBALS['wgExtensionCredits']['other'][] = array(
+	$GLOBALS['wgExtensionCredits']['other'][] = [
 		'path' => __FILE__,
 		'name' => 'Validator',
 		'version' => Validator_VERSION,
-		'author' => array(
-			'[https://www.mediawiki.org/wiki/User:Jeroen_De_Dauw Jeroen De Dauw]'
-		),
+		'author' => [
+			'[https://www.entropywins.wtf/mediawiki Jeroen De Dauw]',
+			'[https://professional.wiki/ Professional.Wiki]',
+		],
 		'url' => 'https://github.com/JeroenDeDauw/Validator',
 		'descriptionmsg' => 'validator-desc',
-		'license-name' => 'GPL-2.0+'
-	);
+		'license-name' => 'GPL-2.0-or-later'
+	];
 
 	/**
 	 * Hook to add PHPUnit test cases.
@@ -74,9 +75,9 @@ $GLOBALS['wgExtensionFunctions'][] = function () {
 
 	$GLOBALS['wgDataValues']['mediawikititle'] = ParamProcessor\MediaWikiTitleValue::class;
 
-	$GLOBALS['wgParamDefinitions']['title'] = array(
+	$GLOBALS['wgParamDefinitions']['title'] = [
 		'string-parser' => ParamProcessor\TitleParser::class,
 		'validator' => ValueValidators\TitleValidator::class,
-	);
+	];
 };
 

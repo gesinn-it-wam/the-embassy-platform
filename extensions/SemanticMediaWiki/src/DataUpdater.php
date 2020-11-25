@@ -9,6 +9,7 @@ use SMW\DeferredTransactionalCallableUpdate as DeferredUpdate;
 use Psr\Log\LoggerAwareTrait;
 use SMW\Property\ChangePropagationNotifier;
 use Revision;
+use SMW\MediaWiki\RevisionGuard;
 
 /**
  * This function takes care of storing the collected semantic data and
@@ -160,11 +161,9 @@ class DataUpdater {
 	 */
 	public function isSkippable( Title $title ) {
 
-		$latestRevID = $title->getLatestRevID( Title::GAID_FOR_UPDATE );
+		$latestRevID = null;
 
-		// Allow a third-party extension to suppress the update process
-		// @see SemanticApprovedRevs
-		if ( \Hooks::run( 'SMW::DataUpdater::SkipUpdate', [ $title, $latestRevID ] ) === false ) {
+		if ( RevisionGuard::isSkippableUpdate( $title, $latestRevID ) ) {
 			return true;
 		}
 
@@ -184,20 +183,27 @@ class DataUpdater {
 	 */
 	public function doUpdate() {
 
-		if ( !$this->canPerformUpdate() ) {
+		if ( !$this->canUpdate() ) {
 			return false;
 		}
 
 		DeferredUpdate::releasePendingUpdates();
 
 		if ( $this->isDeferrableUpdate === false || $this->isCommandLineMode ) {
-			return $this->performUpdate();
+			return $this->runUpdate();
 		}
 
 		$hash = $this->getSubject()->getHash();
-		$connection = $this->store->getConnection( 'mw.db' );
 
-		$deferredUpdate = DeferredUpdate::newUpdate( function(){ $this->performUpdate(); }, $connection );
+		$deferredUpdate = DeferredUpdate::newUpdate(
+			[
+				$this,
+				'runUpdate'
+			],
+			$this->store->getConnection( 'mw.db' )
+		);
+
+		$deferredUpdate->catchExceptionAndRethrow( true );
 
 		$deferredUpdate->setOrigin(
 			[
@@ -225,7 +231,7 @@ class DataUpdater {
 		return true;
 	}
 
-	private function canPerformUpdate() {
+	private function canUpdate() {
 
 		$title = $this->getSubject()->getTitle();
 
@@ -242,7 +248,7 @@ class DataUpdater {
 	 * check if semantic data should be processed and displayed for a page in
 	 * the given namespace
 	 */
-	private function performUpdate() {
+	public function runUpdate() {
 
 		$applicationFactory = ApplicationFactory::getInstance();
 
@@ -257,13 +263,14 @@ class DataUpdater {
 			$title
 		);
 
-		$revision = $wikiPage->getRevision();
-
-		// For example, when using `SemanticApprovedRevs` the hook here ensures
+		// For example, when using `SemanticApprovedRevs` the guard here ensures
 		// that the revision reference is the same that lead to an update during
 		// a content parse, the revision for the parsed text and the `smw_rev`
 		// reference field should both point to the same revision
-		\Hooks::run( 'SMW::Parser::ChangeRevision', [ $title, &$revision ] );
+		$revision = RevisionGuard::getRevision(
+			$title,
+			$wikiPage->getRevision()
+		);
 
 		if ( $revision instanceof Revision ) {
 			$user = User::newFromId( $revision->getUser() );
@@ -335,7 +342,7 @@ class DataUpdater {
 				$schema
 			);
 
-			$schemaFactory->pushPossibleChangePropagationDispatchJob( $schema );
+			$schemaFactory->pushChangePropagationDispatchJob( $schema );
 		}
 
 		$propertyAnnotator->addAnnotation();

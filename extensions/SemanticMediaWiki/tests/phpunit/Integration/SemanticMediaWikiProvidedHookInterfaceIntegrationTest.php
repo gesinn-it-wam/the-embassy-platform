@@ -24,11 +24,34 @@ class SemanticMediaWikiProvidedHookInterfaceIntegrationTest extends \PHPUnit_Fra
 	protected function setUp() {
 		parent::setUp();
 
+		$updateJob = $this->getMockBuilder( '\SMW\MediaWiki\Jobs\UpdateJob' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$jobFactory = $this->getMockBuilder( '\SMW\MediaWiki\JobFactory' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$jobFactory->expects( $this->any() )
+			->method( 'newUpdateJob' )
+			->will( $this->returnValue( $updateJob ) );
+
+		$connectionManager = $this->getMockBuilder( '\SMW\Connection\ConnectionManager' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$connectionManager->expects( $this->any() )
+			->method( 'getConnection' )
+			->will($this->returnCallback( [ $this, 'mockConnection' ] ) );
+
 		$this->testEnvironment = new TestEnvironment();
 		$this->spyLogger = $this->testEnvironment->newSpyLogger();
 
 		$this->mwHooksHandler = $this->testEnvironment->getUtilityFactory()->newMwHooksHandler();
 		$this->mwHooksHandler->deregisterListedHooks();
+
+		$this->testEnvironment->registerObject( 'ConnectionManager', $connectionManager );
+		$this->testEnvironment->registerObject( 'JobFactory', $jobFactory );
 
 		$this->applicationFactory = ApplicationFactory::getInstance();
 	}
@@ -38,6 +61,38 @@ class SemanticMediaWikiProvidedHookInterfaceIntegrationTest extends \PHPUnit_Fra
 		$this->applicationFactory->clear();
 		$this->testEnvironment->tearDown();
 		parent::tearDown();
+	}
+
+	public function mockConnection( $id ) {
+
+		if ( $id === 'sparql' ) {
+			$client = $this->getMockBuilder( '\SMW\SPARQLStore\RepositoryClient' )
+				->disableOriginalConstructor()
+				->getMock();
+
+			$connection = $this->getMockBuilder( '\SMW\SPARQLStore\RepositoryConnection' )
+				->disableOriginalConstructor()
+				->getMock();
+
+			$connection->expects( $this->any() )
+				->method( 'getRepositoryClient' )
+				->will( $this->returnValue( $client ) );
+
+		} else {
+			$connection = $this->getMockBuilder( '\SMW\MediaWiki\Database' )
+				->disableOriginalConstructor()
+				->getMock();
+
+			$connection->expects( $this->any() )
+				->method( 'select' )
+				->will( $this->returnValue( [] ) );
+
+			$connection->expects( $this->any() )
+				->method( 'selectRow' )
+				->will( $this->returnValue( false ) );
+		}
+
+		return $connection;
 	}
 
 	/**
@@ -235,7 +290,36 @@ class SemanticMediaWikiProvidedHookInterfaceIntegrationTest extends \PHPUnit_Fra
 
 		$title = \Title::newFromText( __METHOD__ );
 
-		$idGenerator = $this->getMockBuilder( '\SMWSql3SmwIds' )
+		$store = $this->getMockBuilder( $storeClass )
+			->disableOriginalConstructor()
+			->setMethods( [ 'getObjectIds', 'getPropertyTables', 'getConnection' ] )
+			->getMock();
+
+		$redirectUpdater = $this->getMockBuilder( '\SMW\SQLStore\RedirectUpdater' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$factory = $this->getMockBuilder( '\SMW\SQLStore\SQLStoreFactory' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$semanticDataLookup = $this->getMockBuilder( '\SMW\SQLStore\EntityStore\CachingSemanticDataLookup' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$factory->expects( $this->any() )
+			->method( 'newRedirectUpdater' )
+			->will( $this->returnValue( $redirectUpdater ) );
+
+		$factory->expects( $this->any() )
+			->method( 'newSemanticDataLookup' )
+			->will( $this->returnValue( $semanticDataLookup ) );
+
+		$factory->expects( $this->any() )
+			->method( 'newUpdater' )
+			->will( $this->returnValue( new \SMW\SQLStore\SQLStoreUpdater( $store, $factory ) ) );
+
+		$idGenerator = $this->getMockBuilder( '\SMW\SQLStore\EntityStore\EntityIdManager' )
 			->disableOriginalConstructor()
 			->getMock();
 
@@ -243,9 +327,7 @@ class SemanticMediaWikiProvidedHookInterfaceIntegrationTest extends \PHPUnit_Fra
 			->method( 'getSMWPropertyID' )
 			->will( $this->returnValue( 42 ) );
 
-		$store = $this->getMockBuilder( $storeClass )
-			->setMethods( [ 'getObjectIds', 'getPropertyTables' ] )
-			->getMock();
+		$store->setFactory( $factory );
 
 		$store->expects( $this->any() )
 			->method( 'getObjectIds' )
@@ -254,6 +336,11 @@ class SemanticMediaWikiProvidedHookInterfaceIntegrationTest extends \PHPUnit_Fra
 		$store->expects( $this->any() )
 			->method( 'getPropertyTables' )
 			->will( $this->returnValue( [] ) );
+
+		$store->expects( $this->any() )
+			->method( 'getConnection' )
+			->will( $this->returnValue( $this->mockConnection( 'mw.db' ) ) );
+
 
 		$null = 0;
 
@@ -275,12 +362,12 @@ class SemanticMediaWikiProvidedHookInterfaceIntegrationTest extends \PHPUnit_Fra
 
 		$title = \Title::newFromText( __METHOD__ );
 
-		$idGenerator = $this->getMockBuilder( '\SMWSql3SmwIds' )
+		$idGenerator = $this->getMockBuilder( '\SMW\SQLStore\EntityStore\EntityIdManager' )
 			->disableOriginalConstructor()
 			->getMock();
 
 		$idGenerator->expects( $this->any() )
-			->method( 'findAllEntitiesThatMatch' )
+			->method( 'findIdsByTitle' )
 			->will( $this->returnValue( [ 42 ] ) );
 
 		$store = $this->getMockBuilder( $storeClass )
@@ -313,12 +400,12 @@ class SemanticMediaWikiProvidedHookInterfaceIntegrationTest extends \PHPUnit_Fra
 
 		$title = \Title::newFromText( __METHOD__ );
 
-		$idGenerator = $this->getMockBuilder( '\SMWSql3SmwIds' )
+		$idGenerator = $this->getMockBuilder( '\SMW\SQLStore\EntityStore\EntityIdManager' )
 			->disableOriginalConstructor()
 			->getMock();
 
 		$idGenerator->expects( $this->any() )
-			->method( 'findAllEntitiesThatMatch' )
+			->method( 'findIdsByTitle' )
 			->will( $this->returnValue( [ 42 ] ) );
 
 		$store = $this->getMockBuilder( $storeClass )

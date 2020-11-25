@@ -110,6 +110,12 @@ class HooksTest extends \PHPUnit_Framework_TestCase {
 		$this->testEnvironment->registerObject( 'Store', $this->store );
 		$this->testEnvironment->registerObject( 'ContentParser', $contentParser );
 		$this->testEnvironment->registerObject( 'DeferredCallableUpdate', $deferredCallableUpdate );
+
+		$parserCache = $this->getMockBuilder( '\ParserCache' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$this->testEnvironment->registerObject( 'ParserCache', $parserCache );
 	}
 
 	protected function tearDown() {
@@ -126,9 +132,30 @@ class HooksTest extends \PHPUnit_Framework_TestCase {
 		);
 	}
 
-	public function testInitExtension() {
+	public function testRegisterExtensionCheck() {
 
 		$vars = [];
+
+		Hooks::registerExtensionCheck( $vars );
+
+		// BeforePageDisplay
+		$callback = end( $vars['wgHooks']['BeforePageDisplay'] );
+
+		$outputPage = $this->getMockBuilder( '\OutputPage' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$this->assertThatHookIsExcutable(
+			$callback,
+			[ $outputPage ]
+		);
+	}
+
+	public function testInitExtension() {
+
+		$vars = [
+			'smwgSemanticsEnabled' => true
+		];
 
 		Hooks::registerEarly( $vars );
 
@@ -174,7 +201,6 @@ class HooksTest extends \PHPUnit_Framework_TestCase {
 
 		$vars = [
 			'IP' => 'bar',
-		//	'wgVersion' => '1.24',
 			'wgLang' => $language,
 			'smwgEnabledDeferredUpdate' => false
 		];
@@ -201,7 +227,6 @@ class HooksTest extends \PHPUnit_Framework_TestCase {
 
 		$vars = [
 			'IP' => 'bar',
-		//	'wgVersion' => '1.24',
 			'wgLang' => $language,
 			'smwgEnabledDeferredUpdate' => false
 		];
@@ -278,9 +303,12 @@ class HooksTest extends \PHPUnit_Framework_TestCase {
 			[ 'callSMWBrowseAfterIncomingPropertiesLookupComplete' ],
 			[ 'callSMWBrowseBeforeIncomingPropertyValuesFurtherLinkCreate' ],
 			[ 'callSMWSQLStoreInstallerAfterCreateTablesComplete' ],
+			[ 'callSMWMaintenanceAfterUpdateEntityCollationComplete' ],
+
 		];
 	}
 
+//SMW::Maintenance::AfterUpdateEntityCollationComplete
 	public function callParserAfterTidy( $instance ) {
 
 		$handler = 'ParserAfterTidy';
@@ -469,7 +497,7 @@ class HooksTest extends \PHPUnit_Framework_TestCase {
 			->disableOriginalConstructor()
 			->getMock();
 
-		$searchEngine = $this->getMockBuilder( '\SMW\MediaWiki\Search\Search' )
+		$searchEngine = $this->getMockBuilder( '\SMW\MediaWiki\Search\ExtendedSearchEngine' )
 			->disableOriginalConstructor()
 			->getMock();
 
@@ -711,6 +739,33 @@ class HooksTest extends \PHPUnit_Framework_TestCase {
 	public function callArticleViewHeader( $instance ) {
 
 		$handler = 'ArticleViewHeader';
+
+		$this->title->expects( $this->any() )
+			->method( 'getDBKey' )
+			->will( $this->returnValue( 'Foo' ) );
+
+		$this->title->expects( $this->any() )
+			->method( 'getNamespace' )
+			->will( $this->returnValue( NS_MAIN ) );
+
+		$propertyTableInfoFetcher = $this->getMockBuilder( '\SMW\SQLStore\PropertyTableInfoFetcher' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$store = $this->getMockBuilder( '\SMW\SQLStore\SQLStore' )
+			->disableOriginalConstructor()
+			->setMethods( [ 'getPropertyTables', 'getPropertyTableInfoFetcher' ] )
+			->getMock();
+
+		$store->expects( $this->any() )
+			->method( 'getPropertyTables' )
+			->will( $this->returnValue( [] ) );
+
+		$store->expects( $this->any() )
+			->method( 'getPropertyTableInfoFetcher' )
+			->will( $this->returnValue( $propertyTableInfoFetcher ) );
+
+		$this->testEnvironment->registerObject( 'Store', $store );
 
 		$page = $this->getMockBuilder( '\WikiPage' )
 			->disableOriginalConstructor()
@@ -1326,6 +1381,14 @@ class HooksTest extends \PHPUnit_Framework_TestCase {
 
 		$handler = 'RejectParserCacheValue';
 
+		$this->title->expects( $this->any() )
+			->method( 'getDBKey' )
+			->will( $this->returnValue( 'Foo' ) );
+
+		$this->title->expects( $this->any() )
+			->method( 'getNamespace' )
+			->will( $this->returnValue( NS_MAIN ) );
+
 		$parseOptions = $this->getMockBuilder( '\ParserOptions' )
 			->disableOriginalConstructor()
 			->getMock();
@@ -1784,6 +1847,32 @@ class HooksTest extends \PHPUnit_Framework_TestCase {
 		$this->assertThatHookIsExcutable(
 			$instance->getHandlerFor( $handler ),
 			[ $tableBuilder, $messageReporter, $options ]
+		);
+
+		return $handler;
+	}
+
+	public function callSMWMaintenanceAfterUpdateEntityCollationComplete( $instance ) {
+
+		$handler = 'SMW::Maintenance::AfterUpdateEntityCollationComplete';
+
+		$result = '';
+
+		$this->assertTrue(
+			$instance->isRegistered( $handler )
+		);
+
+		$store = $this->getMockBuilder( '\SMW\SQLStore\SQLStore' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$messageReporter = $this->getMockBuilder( '\Onoi\MessageReporter\MessageReporter' )
+			->disableOriginalConstructor()
+			->getMock();
+
+		$this->assertThatHookIsExcutable(
+			$instance->getHandlerFor( $handler ),
+			[ $store, $messageReporter ]
 		);
 
 		return $handler;

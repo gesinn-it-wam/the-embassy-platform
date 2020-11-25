@@ -115,7 +115,6 @@ export class ValueFilter extends Filter {
 	}
 
 	private getSelected2Control() {
-
 		let select = $( '<select class="filtered-value-select" style="width: 100%;">' );
 
 		let data: IdTextPair[] = [];
@@ -129,7 +128,6 @@ export class ValueFilter extends Filter {
 		}
 
 		mw.loader.using( 'ext.srf.filtered.value-filter.select' ).then( () => {
-
 			select.select2( {
 				multiple: true,
 				placeholder: mw.message( 'srf-filtered-value-filter-placeholder' ).text(),

@@ -196,11 +196,12 @@ class ProcessingErrorMsgHandler {
 		}
 
 		$property = $dataValue->getProperty();
+		$contextPage = $dataValue->getContextPage();
 
-		if ( $property !== null ) {
-			$hash = $property->getKey();
-		} else {
+		if ( $property === null || ( $contextPage !== null && $contextPage->getSubobjectName() !== '' ) ) {
 			$hash = $dataValue->getDataItem()->getHash();
+		} else {
+			$hash = $property->getKey();
 		}
 
 		$errorsByType = $this->flip( $dataValue->getErrorsByType() );
@@ -224,7 +225,9 @@ class ProcessingErrorMsgHandler {
 
 	private function publishError( $containerSemanticData, $property, $error, $type ) {
 
-		if ( $property !== null ) {
+		// `_INST` is not a real (visible) property to create a reference from
+		// and link to
+		if ( $property !== null && $property->getKey() !== '_INST' ) {
 			$containerSemanticData->addPropertyObjectValue(
 				new DIProperty( '_ERRP' ),
 				new DIWikiPage( $property->getKey(), SMW_NS_PROPERTY )

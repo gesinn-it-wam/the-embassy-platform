@@ -124,7 +124,7 @@ class IndicatorProvider implements IIndicatorProvider {
 			}
 		}
 
-		if ( $this->entityCache->fetch( CheckReplicationTask::makeCacheKey( $subject ) ) === 'success' ) {
+		if ( $this->wasChecked( $subject ) ) {
 			return;
 		}
 
@@ -143,6 +143,19 @@ class IndicatorProvider implements IIndicatorProvider {
 				'data-dir' => $dir,
 			]
 		);
+	}
+
+	private function wasChecked( $subject ) {
+
+		$connection = $this->store->getConnection( 'elastic' );
+
+		$checkReplicationTask = $this->entityCache->fetch(
+			CheckReplicationTask::makeCacheKey( $subject )
+		);
+
+		return $connection->ping() === true &&
+			$connection->hasMaintenanceLock() === false &&
+			$checkReplicationTask === CheckReplicationTask::TYPE_SUCCESS;
 	}
 
 }

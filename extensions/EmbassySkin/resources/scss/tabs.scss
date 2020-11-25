@@ -1,0 +1,16 @@
+/* Style the buttons that are used to open the tab content */
+.g-tab span.g-tablinks {
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+/* Style the tab content */
+.g-tabcontent {
+  display: none;
+}
+
+// prevent tab from clicking if the class "disbale-tab" was found
+.g-tablinks.disbale-tab{
+  pointer-events: none;
+  color: #ccc;
+}

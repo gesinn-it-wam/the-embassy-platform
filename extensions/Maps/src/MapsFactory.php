@@ -4,7 +4,7 @@ declare( strict_types = 1 );
 
 namespace Maps;
 
-use FileFetcher\CachingFileFetcher;
+use FileFetcher\Cache\Factory as CacheFactory;
 use FileFetcher\FileFetcher;
 use Jeroen\SimpleGeocoder\Geocoder;
 use Jeroen\SimpleGeocoder\Geocoders\Decorators\CoordinateFriendlyGeocoder;
@@ -16,6 +16,7 @@ use Maps\DataAccess\CachingGeocoder;
 use Maps\DataAccess\MapsFileFetcher;
 use Maps\DataAccess\MediaWikiFileUrlFinder;
 use Maps\DataAccess\PageContentFetcher;
+use Maps\MediaWiki\ParserHooks\DisplayMapFunction;
 use Maps\Presentation\CoordinateFormatter;
 use Maps\Presentation\WikitextParsers\LocationParser;
 use MediaWiki\MediaWikiServices;
@@ -117,7 +118,7 @@ class MapsFactory {
 			return $this->getFileFetcher();
 		}
 
-		return new CachingFileFetcher(
+		return ( new CacheFactory() )->newJeroenSimpleCacheFetcher(
 			$this->getFileFetcher(),
 			$this->getMediaWikiSimpleCache( $this->settings['egMapsGeoJsonCacheTtl'] )
 		);
@@ -147,6 +148,21 @@ class MapsFactory {
 
 	public function getFileUrlFinder(): FileUrlFinder {
 		return new MediaWikiFileUrlFinder();
+	}
+
+	public function getMappingServices(): MappingServices {
+		return new MappingServices(
+			$this->settings['egMapsAvailableServices'],
+			$this->settings['egMapsDefaultService'],
+			new GoogleMapsService(),
+			new LeafletService()
+		);
+	}
+
+	public function getDisplayMapFunction(): DisplayMapFunction {
+		return new DisplayMapFunction(
+			$this->getMappingServices()
+		);
 	}
 
 }

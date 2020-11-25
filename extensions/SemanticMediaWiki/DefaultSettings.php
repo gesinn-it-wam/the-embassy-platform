@@ -47,6 +47,10 @@ return [
 	# $smwgConfigFileDir = $wgUploadDirectory;) or select an entire different
 	# location. The default location is the Semantic MediaWiki extension root.
 	#
+	# During its operation it may contain:
+	#  - `.smw.json`
+	#  - `.smw.maintenance.json`
+	#
 	# @since 3.0
 	##
 	'smwgConfigFileDir' => __DIR__,
@@ -67,7 +71,7 @@ return [
 	#
 	# @since 3.0
 	##
-	'smwgUpgradeKey' => 'smw:2019-01-19',
+	'smwgUpgradeKey' => 'smw:2019-09-23',
 	##
 
 	###
@@ -97,6 +101,18 @@ return [
 	# @since 2.4
 	##
 	'smwgSemanticsEnabled' => false,
+	##
+
+	###
+	# Allows to ignore the check for whether the extension was correctly enabled
+	# or not. It will display a error message on `Special:Version` in case it was
+	# not.
+	#
+	# To ignore the check and suppress the error, set the value to `true`.
+	#
+	# @since 3.1
+	##
+	'smwgIgnoreExtensionRegistrationCheck' => false,
 	##
 
 	###
@@ -149,18 +165,18 @@ return [
 	#
 	# Available DB index as provided by MediaWiki:
 	#
-	# - DB_SLAVE or DB_REPLICA (1.28+)
+	# - DB_REPLICA (1.27.4+)
 	# - DB_MASTER
 	#
 	# @since 2.5.3
 	##
 	'smwgLocalConnectionConf' => [
 		'mw.db' => [
-			'read'  => DB_SLAVE,
+			'read'  => DB_REPLICA,
 			'write' => DB_MASTER
 		],
 		'mw.db.queryengine' => [
-			'read'  => DB_SLAVE,
+			'read'  => DB_REPLICA,
 			'write' => DB_MASTER
 		]
 	],
@@ -592,6 +608,12 @@ return [
 	# - SMW_QSORT_RANDOM: Random sorting support for query results (was
 	#   $smwgQRandSortingSupport)
 	#
+	# - SMW_QSORT_UNCONDITIONAL: Allows an unconditional sort of results even if
+	#   the property doesn't exists as part of the result set (#2823). The option
+	#   isn't implemented for the SPARQLStore and the ElasticStore requires
+	#   the `sort.property.must.exists` to be diabled to reflect the same sorting
+	#   characteristics as with this setting enabled.
+	#
 	# @since 3.0
 	##
 	'smwgQSortFeatures' => SMW_QSORT | SMW_QSORT_RANDOM,
@@ -872,7 +894,7 @@ return [
 
 	###
 	# SMW defers some tasks until after a page was edited by using the MediaWiki
-	# job queueing system (see http://www.mediawiki.org/wiki/Manual:Job_queue).
+	# job queueing system (see https://www.mediawiki.org/wiki/Manual:Job_queue).
 	# For example, when the type of a property is changed, all affected pages will
 	# be scheduled for (later) update. If a wiki generates too many jobs in this
 	# way (Special:Statistics and "showJobs.php" can be used to check that), the
@@ -1073,7 +1095,7 @@ return [
 	# `$wgParserCacheType` if they are set.
 	#
 	# @see https://www.semantic-mediawiki.org/wiki/Help:Caching
-	# @see http://www.mediawiki.org/wiki/$wgMainCacheType
+	# @see https://www.mediawiki.org/wiki/$wgMainCacheType
 	#
 	# @since 3.0
 	# @default CACHE_ANYTHING
@@ -1118,10 +1140,12 @@ return [
 		'special.unusedproperties' => 3600,
 		'special.properties' => 3600,
 		'special.statistics' => 3600,
+		'table.statistics' => 3600,
 		'api.browse' => 3600,
 		'api.browse.pvalue' => 3600,
 		'api.browse.psubject' => 3600,
-		'api.task'  => 3600
+		'api.task'  => 3600,
+		'api.table.statistics'  => 3600
 	],
 	##
 
@@ -1271,6 +1295,12 @@ return [
 	# timely manner independent of a users job scheduler environment. The number
 	# indicates the expected number of jobs to be executed per request.
 	#
+	# `purge-page`
+	#   `on-outdated-query-dependency` actively does a page purge via the API
+	#   so that not only the parser cache is refreshed but also ensures that any
+	#   newly annotation values (such as annotations depending on some query input)
+	#   are stored and recomputed.
+	#
 	# @experimental
 	#
 	# `check-query` The display of query results and the storage of entities that
@@ -1296,6 +1326,9 @@ return [
 		'check-query' => false,
 		'run-jobs' => [
 			'smw.fulltextSearchTableUpdate' => 1
+		],
+		'purge-page' => [
+			'on-outdated-query-dependency' => true
 		]
 	],
 	##
@@ -1366,10 +1399,13 @@ return [
 	# @see https://www.semantic-mediawiki.org/wiki/Help:EnableSemantics
 	# @see https://www.semantic-mediawiki.org/wiki/Help:Pretty_URIs
 	#
+	# Example:
+	# 'smwgNamespace' => "http://example.org/id/"
+	#
 	# @since 1.0
-	# @default = ''
+	# @default null
 	##
-	// 	'smwgNamespace' => "http://example.org/id/",
+	'smwgNamespace' => null,
 	##
 
 	###
@@ -1496,6 +1532,9 @@ return [
 	#
 	# - SMW_DV_PROV_LHNT (PropertyValue) to output a <sup>p</sup> hint marker on
 	# properties that use a preferred label
+	#
+	# - SMW_DV_WPV_PIPETRICK WikiPageValue use a full pipe trick when rendering
+	# its caption
 	#
 	# @since 2.4
 	##
@@ -1864,9 +1903,16 @@ return [
 	# to the desired target state and hereby automatically retires the related
 	# setting.
 	#
+	# - SMW_QUERYRESULT_PREFETCH to use the prefetch method to retrieve row
+	# related items for a `QueryResult`.
+	#
+	# - SMW_SHOWPARSER_USE_CURTAILMENT to use a short cut and circumventing the
+	# `QueryEngine` and directly access the DB since `#show` will always only
+	# request an output for one particular entity.
+	#
 	# @since 3.0
 	##
-	'smwgExperimentalFeatures' => false,
+	'smwgExperimentalFeatures' => SMW_QUERYRESULT_PREFETCH | SMW_SHOWPARSER_USE_CURTAILMENT,
 	##
 
 	##
@@ -2039,6 +2085,27 @@ return [
 	##
 
 	##
+	# Lookup and display of constraint errors
+	#
+	# A convenience function to provided users with a help to quickly identify
+	# which constraints violation are currently exists for a viewed subject.
+	#
+	# - `SMW_CONSTRAINT_ERR_CHECK_NONE` disables the check and display via the
+	#    page indicator
+	# - `SMW_CONSTRAINT_ERR_CHECK_MAIN` will only check the main subject
+	# - `SMW_CONSTRAINT_ERR_CHECK_ALL` will check the main subject and all
+	#    subobjects attached to the main subject
+	#
+	# The constraint error lookup is cached therefore no negative performance
+	# impact is expected when viewing a page repeatedly.
+	#
+	# @since 3.1
+	# @default SMW_CONSTRAINT_ERR_CHECK_ALL
+	##
+	'smwgCheckForConstraintErrors' => SMW_CONSTRAINT_ERR_CHECK_ALL,
+	##
+
+	##
 	# THE FOLLOWING SETTINGS AND SUPPORT FUNCTIONS ARE EXPERIMENTAL!
 	#
 	# Please make you read the Readme.md (see the Elastic folder) file first
@@ -2058,27 +2125,42 @@ return [
 	##
 	'smwgSchemaTypes' => [
 		'LINK_FORMAT_SCHEMA' => [
-			'validation_schema' => __DIR__ . '/data/schema/link-format-schema.v1.json',
 			'group' => SMW_SCHEMA_GROUP_FORMAT,
+			'validation_schema' => __DIR__ . '/data/schema/link-format-schema.v1.json',
 			'type_description' => 'smw-schema-description-link-format-schema',
-			// '__factory' => [ 'SMW\Schema\SchemaFactory', 'newTest' ]
+			// 'class' => [ 'SMW\Schema\SchemaFactory', 'newTest' ]
 		],
 		'SEARCH_FORM_SCHEMA' => [
-			'validation_schema' => __DIR__ . '/data/schema/search-form-schema.v1.json',
 			'group' => SMW_SCHEMA_GROUP_SEARCH_FORM,
+			'validation_schema' => __DIR__ . '/data/schema/search-form-schema.v1.json',
 			'type_description' => 'smw-schema-description-search-form-schema'
 		],
 		'PROPERTY_GROUP_SCHEMA' => [
-			'validation_schema' => __DIR__ . '/data/schema/property-group-schema.v1.json',
 			'group' => SMW_SCHEMA_GROUP_PROPERTY,
+			'validation_schema' => __DIR__ . '/data/schema/property-group-schema.v1.json',
 			'type_description' => 'smw-schema-description-property-group-schema'
 		],
 		'PROPERTY_CONSTRAINT_SCHEMA' => [
+			'group' => SMW_SCHEMA_GROUP_CONSTRAINT,
 			'validation_schema' => __DIR__ . '/data/schema/property-constraint-schema.v1.json',
-			'group' => SMW_SCHEMA_GROUP_PROPERTY,
 			'type_description' => 'smw-schema-description-property-constraint-schema',
-			'change_propagation' => [ '_CONSTRAINT_SCHEMA' ]
-		]
+			'change_propagation' => [ '_CONSTRAINT_SCHEMA' ],
+			'usage_lookup' => '_CONSTRAINT_SCHEMA'
+		],
+		'CLASS_CONSTRAINT_SCHEMA' => [
+			'group' => SMW_SCHEMA_GROUP_CONSTRAINT,
+			'validation_schema' => __DIR__ . '/data/schema/class-constraint-schema.v1.json',
+			'type_description' => 'smw-schema-description-class-constraint-schema',
+			'change_propagation' => [ '_CONSTRAINT_SCHEMA' ],
+			'usage_lookup' => '_CONSTRAINT_SCHEMA'
+		],
+		'PROPERTY_PROFILE_SCHEMA' => [
+			'group' => SMW_SCHEMA_GROUP_PROFILE,
+			'validation_schema' => __DIR__ . '/data/schema/property-profile-schema.v1.json',
+			'type_description' => 'smw-schema-description-property-profile-schema',
+			'change_propagation' => '_PROFILE_SCHEMA',
+			'usage_lookup' => '_PROFILE_SCHEMA'
+		],
 	],
 	##
 
@@ -2150,7 +2232,7 @@ return [
 			// possible discrepancy between the stored on-wiki data and the data
 			// replicated to Elasticsearch.
 			'monitor.entity.replication' => true,
-			'monitor.entity.replication.cache.lifetime' => 3660,
+			'monitor.entity.replication.cache_lifetime' => 3660,
 		],
 		'query' => [
 

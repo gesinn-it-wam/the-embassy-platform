@@ -5,28 +5,28 @@ namespace Maps;
 use Html;
 
 /**
- * Class holding information and functionality specific to Leaflet.
- * This information and features can be used by any mapping feature.
- *
  * @licence GNU GPL v2+
- * @author Pavel Astakhov < pastakhov@yandex.ru >
  */
-class LeafletService extends MappingService {
+class LeafletService implements MappingService {
 
-	public function __construct( $serviceName ) {
-		parent::__construct(
-			$serviceName,
-			[ 'leafletmaps', 'leaflet' ]
-		);
+	private $addedDependencies = [];
+
+	public function getName(): string {
+		return 'leaflet';
 	}
 
-	/**
-	 * @see MappingService::addParameterInfo
-	 *
-	 * @since 3.0
-	 */
-	public function addParameterInfo( array &$params ) {
+	public function getAliases(): array {
+		return [ 'leafletmaps', 'leaflet' ]; // TODO: main name should not be in here?
+	}
+
+	public function hasAlias( string $alias ): bool {
+		return in_array( $alias, [ 'leafletmaps', 'leaflet' ] );
+	}
+
+	public function getParameterInfo(): array {
 		global $GLOBALS;
+
+		$params = [];
 
 		$params['zoom'] = [
 			'type' => 'integer',
@@ -112,6 +112,8 @@ class LeafletService extends MappingService {
 			'default' => '',
 			'message' => 'maps-displaymap-par-geojson',
 		];
+
+		return $params;
 	}
 
 	/**
@@ -121,41 +123,62 @@ class LeafletService extends MappingService {
 		return $GLOBALS['egMapsLeafletZoom'];
 	}
 
-	/**
-	 * @see MappingService::getMapId
-	 *
-	 * @since 3.0
-	 */
-	public function getMapId( $increment = true ) {
+	public function newMapId(): string {
 		static $mapsOnThisPage = 0;
 
-		if ( $increment ) {
-			$mapsOnThisPage++;
-		}
+		$mapsOnThisPage++;
 
 		return 'map_leaflet_' . $mapsOnThisPage;
 	}
 
-	/**
-	 * @see MappingService::getResourceModules
-	 *
-	 * @since 3.0
-	 *
-	 * @return string[]
-	 */
-	public function getResourceModules() {
+	public function getResourceModules(): array {
+		return [ 'ext.maps.leaflet', 'ext.sm.leafletajax' ];
+	}
+
+	public function getDependencyHtml( array $params ): string {
+		$dependencies = [];
+
+		// Only add dependencies that have not yet been added.
+		foreach ( $this->getDependencies( $params ) as $dependency ) {
+			if ( !in_array( $dependency, $this->addedDependencies ) ) {
+				$dependencies[] = $dependency;
+				$this->addedDependencies[] = $dependency;
+			}
+		}
+
+		// If there are dependencies, put them all together in a string, otherwise return false.
+		return $dependencies !== [] ? implode( '', $dependencies ) : false;
+	}
+
+	private function getDependencies( array $params ): array {
+		$leafletPath = $GLOBALS['wgScriptPath'] . '/extensions/Maps/resources/leaflet/leaflet';
+
 		return array_merge(
-			parent::getResourceModules(),
-			[ 'ext.maps.leaflet' ]
+			[
+				Html::linkedStyle( "$leafletPath/leaflet.css" ),
+				Html::linkedScript( "$leafletPath/leaflet.js" ),
+			],
+			$this->getLayerDependencies( $params )
 		);
 	}
 
-	protected function getDependencies() {
-		$leafletPath = $GLOBALS['wgScriptPath'] . '/extensions/Maps/resources/leaflet/leaflet';
-		return [
-			Html::linkedStyle( "$leafletPath/leaflet.css" ),
-			Html::linkedScript( "$leafletPath/leaflet.js" ),
-		];
+	private function getLayerDependencies( array $params ) {
+		global $egMapsLeafletLayerDependencies, $egMapsLeafletAvailableLayers,
+			   $egMapsLeafletLayersApiKeys;
+
+		$layerDependencies = [];
+
+		foreach ( $params['layers'] as $layerName ) {
+			if ( array_key_exists( $layerName, $egMapsLeafletAvailableLayers )
+				&& $egMapsLeafletAvailableLayers[$layerName]
+				&& array_key_exists( $layerName, $egMapsLeafletLayersApiKeys )
+				&& array_key_exists( $layerName, $egMapsLeafletLayerDependencies ) ) {
+				$layerDependencies[] = '<script src="' . $egMapsLeafletLayerDependencies[$layerName] .
+					$egMapsLeafletLayersApiKeys[$layerName] . '"></script>';
+			}
+		}
+
+		return array_unique( $layerDependencies );
 	}
 
 }

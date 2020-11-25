@@ -41,9 +41,9 @@ class ValueListBuilder {
 	private $pagingLimit = 0;
 
 	/**
-	 * @var integer
+	 * @var integer|null
 	 */
-	private $filterCount = 0;
+	private $filterCount;
 
 	/**
 	 * @var integer
@@ -144,7 +144,7 @@ class ValueListBuilder {
 		$until = isset( $query['until'] ) ? $query['until'] : 0;
 		$filter = isset( $query['filter'] ) ? $query['filter'] : '';
 
-		$this->filterCount = 0;
+		$this->filterCount = null;
 
 		// limit==0: configuration setting to disable this completely
 		if ( $limit < 1 ) {
@@ -289,9 +289,10 @@ class ValueListBuilder {
 		$requestOptions->limit = $this->maxPropertyValues;
 
 		$prefetchItemLookup = $this->store->service( 'PrefetchItemLookup' );
-		$prefetchItemLookup->asItemIndex( true );
 
-		$propertyValuesArray = $prefetchItemLookup->getPropertyValues(
+		$requestOptions->setOption( $prefetchItemLookup::HASH_INDEX, true );
+
+		$propertyValues = $prefetchItemLookup->getPropertyValues(
 			$diWikiPages,
 			$property,
 			$requestOptions
@@ -328,8 +329,8 @@ class ValueListBuilder {
 				$prev_start_char = $start_char;
 			}
 
-			if ( isset( $propertyValuesArray[$hash] ) ) {
-				$values = $propertyValuesArray[$hash];
+			if ( isset( $propertyValues[$hash] ) ) {
+				$values = $propertyValues[$hash];
 			}
 
 			// May return an iterator

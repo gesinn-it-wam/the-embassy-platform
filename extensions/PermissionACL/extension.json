@@ -1,0 +1,25 @@
+{
+  "name": "PermissionACL",
+  "version": "2.0",
+  "author": [
+    "Jan Vavříček"
+  ],
+  "url": "https://mediawiki.org/wiki/Extension:PermissionACL",
+  "descriptionmsg": "permissionacl-desc",
+  "license-name": "",
+  "type": "",
+  "MessagesDirs": {
+    "PermissionACL": [
+      "i18n"
+    ]
+  },
+  "AutoloadClasses": {
+    "PermissionACL\\Hooks": "includes/Hooks.php"
+  },
+  "Hooks": {
+    "userCan": [
+      "PermissionACL\\Hooks::onuserCan"
+    ]
+  },
+  "manifest_version": 1
+}

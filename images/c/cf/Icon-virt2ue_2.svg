@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="21px" height="21px" viewBox="0 0 21 21" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Group 19</title>
+    <defs>
+        <polygon id="path-1" points="0 0.374803774 19.8152226 0.374803774 19.8152226 13.5821535 0 13.5821535"></polygon>
+        <polygon id="path-3" points="0 0.0911358491 16.5126868 0.0911358491 16.5126868 16.6010215 0 16.6010215"></polygon>
+        <polygon id="path-5" points="0.260898113 0.187377358 12.6454113 0.187377358 12.6454113 6.78970072 0.260898113 6.78970072"></polygon>
+    </defs>
+    <g id="31---Training-" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="13A---Browsing-training-guides" transform="translate(-860.000000, -864.000000)">
+            <g id="Group-19" transform="translate(860.000000, 864.000000)">
+                <g id="Group-4" transform="translate(0.000000, 6.230317)">
+                    <mask id="mask-2" fill="white">
+                        <use xlink:href="#path-1"></use>
+                    </mask>
+                    <g id="Clip-2"></g>
+                    <polygon id="Fill-1" fill="#A7D9DC" mask="url(#mask-2)" points="16.5126868 6.15419623 19.8152242 6.15419623 19.8152242 0.374803774 16.5126868 0.374803774"></polygon>
+                    <polyline id="Fill-3" fill="#F5BA59" mask="url(#mask-2)" points="0 6.97983019 6.60507547 13.5849057 6.60507547 6.97983019 0 6.97983019"></polyline>
+                </g>
+                <polyline id="Fill-5" fill="#F5BA59" points="16.5126868 3.30258491 13.2101472 6.60512075 13.2101472 12.3845132 16.5126868 12.3845132 16.5126868 6.60512075 19.8152226 6.60512075 19.8152226 4.52830189e-05 16.5126868 3.30258491"></polyline>
+                <g id="Group-10" transform="translate(0.000000, 3.211449)">
+                    <mask id="mask-4" fill="white">
+                        <use xlink:href="#path-3"></use>
+                    </mask>
+                    <g id="Clip-8"></g>
+                    <polyline id="Fill-7" fill="#006C79" mask="url(#mask-4)" points="0 0.0911358491 0 3.3936717 6.60507547 3.3936717 3.30253736 0.0911358491 0 0.0911358491"></polyline>
+                    <polyline id="Fill-9" fill="#D8BD90" mask="url(#mask-4)" points="13.2101472 13.3012366 13.2101472 16.6037736 16.5126868 13.3012366 13.2101472 13.3012366"></polyline>
+                </g>
+                <polyline id="Fill-11" fill="#D8BD90" points="0 4.52830189e-05 0 3.30258491 3.30253736 3.30258491 0 4.52830189e-05"></polyline>
+                <g id="Group-16" transform="translate(7.169811, 13.022770)">
+                    <mask id="mask-6" fill="white">
+                        <use xlink:href="#path-5"></use>
+                    </mask>
+                    <g id="Clip-14"></g>
+                    <polyline id="Fill-13" fill="#A7D9DC" mask="url(#mask-6)" points="6.04033585 0.187377358 6.04033585 3.48991585 9.34287547 3.48991585 12.6454113 0.187377358 6.04033585 0.187377358"></polyline>
+                    <polygon id="Fill-15" fill="#004B86" mask="url(#mask-6)" points="0.260898113 6.79245283 6.04033962 6.79245283 6.04033962 0.187377358 0.260898113 0.187377358"></polygon>
+                </g>
+                <polygon id="Fill-17" fill="#004B86" points="0 13.2101472 6.60507547 13.2101472 6.60507547 6.60512075 0 6.60512075"></polygon>
+            </g>
+        </g>
+    </g>
+</svg>

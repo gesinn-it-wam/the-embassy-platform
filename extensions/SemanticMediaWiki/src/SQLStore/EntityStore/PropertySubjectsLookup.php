@@ -42,6 +42,16 @@ class PropertySubjectsLookup {
 	private $dataItemHandler;
 
 	/**
+	 * @var array
+	 */
+	private $prefetch = [];
+
+	/**
+	 * @var string
+	 */
+	private $caller = '';
+
+	/**
 	 * @since 3.0
 	 *
 	 * @param SQLStore $store
@@ -59,6 +69,94 @@ class PropertySubjectsLookup {
 	 * {@inheritDoc}
 	 */
 	public function fetchFromTable( $pid, TableDefinition $proptable, DataItem $dataItem = null, RequestOptions $requestOptions = null ) {
+
+		$this->caller = __METHOD__;
+
+		$res = $this->doFetch( $pid, $proptable, $dataItem, $requestOptions );
+
+		// Return an iterator and avoid resolving the resources directly as it
+		// may contain a large list of possible matches
+		$res = $this->iteratorFactory->newMappingIterator(
+			$this->iteratorFactory->newResultIterator( $res ),
+			[ $this, 'newFromRow' ]
+		);
+
+		return $res;
+	}
+
+	/**
+	 * @since 3.1
+	 *
+	 * @param array $ids
+	 * @param DataItem $property
+	 * @param TableDefinition $proptable
+	 * @param RequestOptions $requestOptions
+	 */
+	public function prefetchFromTable( array $ids, DataItem $property, TableDefinition $proptable, RequestOptions $requestOptions ) {
+
+		if ( $ids === [] ) {
+			return [];
+		}
+
+		$this->caller = __METHOD__;
+		$hash = $property->getSerialization();
+
+		if ( $requestOptions->getOption( RequestOptions::PREFETCH_FINGERPRINT ) === null ) {
+			$hash .= implode( '|', $ids );
+		}
+
+		$hash = md5( $hash . $requestOptions->getHash() );
+
+		if ( isset( $this->prefetch[$hash] ) ) {
+			return $this->prefetch[$hash];
+		}
+
+		$pid = $this->store->getObjectIds()->getSMWPropertyID(
+			$property
+		);
+
+		// Avoid any grouping when using the prefetch with a WHERE IN
+		// Test: Q0624
+		if ( $property->isInverse() ) {
+			$requestOptions->setOption( 'NO_GROUPBY', true );
+			$requestOptions->setOption( 'NO_DISTINCT', true );
+		}
+
+		$res = $this->doFetch( $pid, $proptable, $ids, $requestOptions );
+		$result = [];
+		$warmupCache = [];
+
+		// Reassign per ID
+		foreach ( $res as $row ) {
+
+			if ( !isset( $result[$row->id] ) ) {
+				$result[$row->id] = [];
+			}
+
+			$keys = [
+				$row->smw_title,
+				$row->smw_namespace,
+				$row->smw_iw,
+				$row->smw_sort,
+				$row->smw_subobject
+
+			];
+
+			$dataItem = $this->dataItemHandler->dataItemFromDBKeys( $keys );
+			$dataItem->setId( $row->smw_id );
+
+			$result[$row->id][] = $dataItem;
+			$warmupCache[] = $dataItem;
+		}
+
+		if ( $warmupCache !== [] ) {
+			$this->store->getObjectIds()->warmupCache( $warmupCache );
+		}
+
+		return $this->prefetch[$hash] = $result;
+	}
+
+	private function doFetch( $pid, TableDefinition $proptable, $dataItem = null, RequestOptions $requestOptions = null ) {
 
 		$connection = $this->store->getConnection( 'mw.db' );
 		$group = false;
@@ -134,7 +232,20 @@ class PropertySubjectsLookup {
 			$query->condition( $query->eq( "t1.p_id", $pid ) );
 		}
 
-		$this->getWhereConds( $query, $dataItem );
+		// Specified by the prefetch
+		if ( is_array( $dataItem ) ) {
+
+			$fieldname = 's_id';
+
+			if ( $proptable->getDiType() === DataItem::TYPE_WIKIPAGE ) {
+				$fieldname = 'o_id';
+			}
+
+			$query->condition( $query->in( "t1.$fieldname", $dataItem ) );
+			$query->field( "t1.$fieldname AS id" );
+		} else {
+			$this->getWhereConds( $query, $dataItem );
+		}
 
 		if ( $requestOptions !== null ) {
 			foreach ( $requestOptions->getExtraConditions() as $extraCondition ) {
@@ -157,6 +268,10 @@ class PropertySubjectsLookup {
 			}
 		}
 
+		if ( $requestOptions->getOption( 'NO_GROUPBY' ) ) {
+			$group = false;
+		}
+
 		if ( $group && $connection->isType( 'postgres') ) {
 			// Avoid a "... 42803 ERROR:  column "s....smw_title" must appear in
 			// the GROUP BY clause or be used in an aggregate function ..."
@@ -171,6 +286,8 @@ class PropertySubjectsLookup {
 			// http://www.mysqltutorial.org/mysql-distinct.aspx
 			$requestOptions->setOption( 'GROUP BY', $sortField . ', smw_id' );
 			$requestOptions->setOption( 'ORDER BY', false );
+		} elseif ( $requestOptions->getOption( 'NO_DISTINCT' ) ) {
+			$requestOptions->setOption( 'DISTINCT', false );
 		} else {
 			$requestOptions->setOption( 'DISTINCT', true );
 		}
@@ -191,20 +308,24 @@ class PropertySubjectsLookup {
 
 		$query->options( $opts );
 
+		if ( $requestOptions->exclude_limit ) {
+			$query->option( 'LIMIT', null );
+			$query->option( 'OFFSET', null );
+		}
+
+		$caller = $this->caller;
+
+		if ( strval( $requestOptions->getCaller() ) !== '' ) {
+			$caller .= " (for " . $requestOptions->getCaller() . ")";
+		}
+
 		$res = $connection->query(
 			$query,
-			__METHOD__
+			$caller
 		);
 
 		$this->dataItemHandler = $this->store->getDataItemHandlerForDIType(
 			DataItem::TYPE_WIKIPAGE
-		);
-
-		// Return an iterator and avoid resolving the resources directly as it
-		// may contain a large list of possible matches
-		$res = $this->iteratorFactory->newMappingIterator(
-			$this->iteratorFactory->newResultIterator( $res ),
-			[ $this, 'newFromRow' ]
 		);
 
 		return $res;
@@ -220,7 +341,7 @@ class PropertySubjectsLookup {
 	public function newFromRow( $row ) {
 
 		try {
-			if ( $row->smw_iw === '' || $row->smw_iw{0} != ':' ) { // filter special objects
+			if ( $row->smw_iw === '' || $row->smw_iw[0] != ':' ) { // filter special objects
 
 				$keys = [
 					$row->smw_title,

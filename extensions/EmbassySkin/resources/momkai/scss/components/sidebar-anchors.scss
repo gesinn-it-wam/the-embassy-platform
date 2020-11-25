@@ -1,0 +1,43 @@
+.sidebar-anchors {
+  @include media-breakpoint-up(lg) {
+    margin-top: 34px;
+  }
+
+  min-height: 100%;
+
+  h2 {
+    margin-bottom: 30px;
+    color: $te-blue;
+  }
+}
+
+.sidebar-anchors-wrapper {
+  @include media-breakpoint-up(lg) {
+    position: sticky;
+    top: 40px;
+  }
+  ul {
+    margin-left: 0;
+  }
+
+  li {
+    margin-bottom: 20px;
+    padding-left: 0;
+    font-size: rem-calc(16);
+    background: none;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    a {
+      font-family: $te-font-bold;
+      text-decoration: underline;
+      color: $te-blue;
+
+      &:hover {
+        text-decoration: none;
+      }
+    }
+  }
+}

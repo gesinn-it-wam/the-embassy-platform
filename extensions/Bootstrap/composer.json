@@ -1,0 +1,49 @@
+{
+	"name": "mediawiki/bootstrap",
+	"type": "mediawiki-extension",
+	"description": "Provides the Bootstrap 4 web front-end framework to MediaWiki skins and extensions",
+	"keywords": [
+		"wiki",
+		"MediaWiki",
+		"extension",
+		"Twitter",
+		"Bootstrap"
+	],
+	"homepage": "https://www.mediawiki.org/wiki/Extension:Bootstrap",
+	"readme": "README.md",
+	"license": "GPL-3.0-or-later",
+	"authors": [
+		{
+			"name": "Stephan Gambke",
+			"email": "s7eph4n@protonmail.com",
+			"role": "Developer"
+		}
+	],
+	"support": {
+		"issues": "https://github.com/cmln/mw-bootstrap/issues",
+		"forum": "https://www.mediawiki.org/wiki/Extension_talk:Bootstrap",
+		"wiki": "https://www.mediawiki.org/wiki/Extension:Bootstrap",
+		"irc": "irc://irc.freenode.org/mediawiki",
+		"source": "https://github.com/cmln/mw-bootstrap",
+		"docs": "https://github.com/cmln/mw-bootstrap/tree/latest/docs",
+		"rss": "https://github.com/cmln/mw-bootstrap/releases.atom"
+	},
+	"require": {
+		"php": ">=5.6",
+		"composer/installers": "^1.0.1",
+		"mediawiki/mediawiki": ">=1.27.0",
+		"mediawiki/mw-extension-registry-helper": "^1.0",
+		"mediawiki/scss": "^1.0"
+	},
+	"autoload": {
+		"psr-4": {
+			"Bootstrap\\": "src/",
+			"Bootstrap\\Tests\\" : "tests/phpunit/"
+		}
+	},
+	"extra": {
+		"branch-alias": {
+			"dev-master": "4.x-dev"
+		}
+	}
+}

@@ -1,0 +1,130 @@
+// Semantic Drilldown menu
+
+#drilldown-categories-wrapper {
+  display: none;
+}
+
+
+// hide SD page navigation
+div.drilldown-results div.mw-paging {
+  display: none;
+}
+
+ul#drilldown-categories {
+  border: 1px solid #BBB !important;
+  border-radius: 3px;
+  padding-left: 0;
+
+  li.category {
+    border-top: 1px solid #BBB !important;
+    background: #FFF !important;
+  }
+}
+
+.drilldown-filter {
+  margin-bottom: 16px;
+
+  input[type="submit"] {
+    position: relative;
+    left: -12px;
+  }
+  .ui-widget input.ui-widget-content {
+    width: 300px;
+    padding: 6px 8px;
+  }
+  button.ui-button {
+    width: 16px !important;
+    padding: 6px 8px !important;
+    height: 28px  !important;
+    background: none  !important;
+    border: none !important;
+    position: relative;
+    left: -19px;
+    top: -2px;
+  }
+
+  p {
+    display: inline-block; // ugly hack
+  }
+}
+.ui-autocomplete {
+  overflow-x: hidden !important;
+  width: 300px;
+}
+
+div.drilldown-filters {
+  border: none !important;
+}
+
+.drilldown-values-toggle {
+  position: relative;
+  top: -2px;
+  opacity: 0.5;
+}
+
+// hide result navigation in the bottom
+/*.drilldown-results #columns-container + p {
+  display: none;
+}*/
+
+// TODO: Remove this as soon as momkai provides styles for this
+// Temp filter styles
+.drilldown-filter .drilldown-filter-values form .ui-widget {
+  float: left;
+}
+
+
+.drilldown-filter .drilldown-filter-values form > p{
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding-top: 2px;
+  background-color: #bcd5da;
+  transition: background-color 150ms ease-in-out;
+
+  margin-bottom: 0;
+  padding-bottom:0;
+  top: -1px;
+}
+
+
+.drilldown-filter .drilldown-filter-values form > p > input {
+  display: inline-block;
+  height: 31px;
+  padding: 10px 20px;
+  font-family: 'regular-bold';
+  font-size: 1rem;
+  text-transform: lowercase;
+  border: none;
+  background-color: transparent;
+
+  line-height: 0;
+  margin:0 !important;
+}
+
+// overwrite default styles for SD
+.drilldown-filter input[type="submit"] {
+  left: 0;
+}
+
+.drilldown-filter{
+  clear: both;
+}
+
+// Category:Resource
+// Temp: Overwrite clear property for class ResourceList
+.ResourceList {
+  clear: both;
+}
+
+// Hide Filter "Type"
+div.drilldown-filters div.drilldown-filter[data-filter-name="Type"] {
+  display: none !important;
+}
+
+// Hide Filter section on Special:BrowseData/Guide And Special:BrowseData/Initiative
+body.page-Special_BrowseData_Guide div.drilldown-results{
+  div#drilldown-header, div.alert.alert-info, div.drilldown-filters{
+    display: none;
+  }
+}

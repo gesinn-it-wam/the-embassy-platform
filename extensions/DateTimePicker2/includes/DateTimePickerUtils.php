@@ -8,7 +8,7 @@
 
 namespace DTP2;
 
-use Preferences, RequestContext, DateTimeZone, DateTime;
+use Preferences, RequestContext;
 
 class DateTimePickerUtils {
 
@@ -95,6 +95,7 @@ class DateTimePickerUtils {
 	 * @return object $tz
 	 */
 	public static function getTimezones() {
+		global $wgUser;
 
 		$tz = [
 			[ "value" => "-720", "label" => "UTC-12" ],
@@ -122,19 +123,17 @@ class DateTimePickerUtils {
 			[ "value" => "600", "label" => "UTC+10" ],
 			[ "value" => "660", "label" => "UTC+11" ],
 			[ "value" => "720", "label" => "UTC+12" ],
-
 		];
 
-		$tzOptions = Preferences::getTimezoneOptions( new RequestContext() );
+		$tzOptions = Preferences::getPreferences( $wgUser,  new RequestContext() );
 
-		foreach ( $tzOptions as $label ) {
-
-			if ( is_array( $label ) ) {
-				foreach ( $label as $label => $timezone ) {
-					$timezone = explode( '|', $timezone );
-					array_push( $tz, [ "value" => $timezone[1], "label" => $label ] );
+		foreach ( $tzOptions['timecorrection']['options'] as $options ) {
+				if ( is_array( $options ) ) {
+					foreach ( $options as $label => $timezone ) {
+						$timezone = explode( '|', $timezone );
+						array_push( $tz, [ "value" => $timezone[1], "label" => $label ] );
+					}
 				}
-			}
 		}
 
 		return $tz;

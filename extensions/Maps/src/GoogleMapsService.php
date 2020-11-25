@@ -5,21 +5,16 @@ namespace Maps;
 use Html;
 
 /**
- * Class holding information and functionality specific to Google Maps v3.
- * This information and features can be used by any mapping feature.
- *
- * @since 0.7
- *
  * @licence GNU GPL v2+
  * @author Jeroen De Dauw < jeroendedauw@gmail.com >
  * @author Peter Grassberger < petertheone@gmail.com >
  */
-class GoogleMapsService extends MappingService {
+class GoogleMapsService implements MappingService {
 
 	/**
 	 * Maps user input map types to the Google Maps names for the map types.
 	 */
-	private static $mapTypes = [
+	private const MAP_TYPES = [
 		'normal' => 'ROADMAP',
 		'roadmap' => 'ROADMAP',
 		'satellite' => 'SATELLITE',
@@ -29,33 +24,37 @@ class GoogleMapsService extends MappingService {
 		'earth' => 'earth'
 	];
 
-	private static $typeControlStyles = [
+	private const TYPE_CONTROL_STYLES = [
 		'default' => 'DEFAULT',
 		'horizontal' => 'HORIZONTAL_BAR',
 		'dropdown' => 'DROPDOWN_MENU'
 	];
 
-	public function __construct( $serviceName ) {
-		parent::__construct(
-			$serviceName,
-			[ 'googlemaps', 'google' ]
-		);
+	private $addedDependencies = [];
+
+	public function getName(): string {
+		return 'googlemaps3';
 	}
 
-	/**
-	 * @see MappingService::addParameterInfo
-	 *
-	 * @since 0.7
-	 */
-	public function addParameterInfo( array &$params ) {
+	public function getAliases(): array {
+		return [ 'googlemaps', 'google' ];
+	}
+
+	public function hasAlias( string $alias ): bool {
+		return in_array( $alias, [ 'googlemaps', 'google' ] );
+	}
+
+	public function getParameterInfo(): array {
 		global $egMapsGMaps3Type, $egMapsGMaps3Types, $egMapsGMaps3Controls, $egMapsGMaps3Layers;
 		global $egMapsGMaps3DefTypeStyle, $egMapsGMaps3DefZoomStyle, $egMapsGMaps3AutoInfoWindows;
 		global $egMapsResizableByDefault;
 
+		$params = [];
+
 		$params['zoom'] = [
 			'type' => 'integer',
 			'range' => [ 0, 20 ],
-			'default' => self::getDefaultZoom(),
+			'default' => $GLOBALS['egMapsGMaps3Zoom'],
 			'message' => 'maps-par-zoom',
 		];
 
@@ -64,7 +63,7 @@ class GoogleMapsService extends MappingService {
 			'values' => self::getTypeNames(),
 			'message' => 'maps-googlemaps3-par-type',
 			'post-format' => function ( $value ) {
-				return GoogleMapsService::$mapTypes[strtolower( $value )];
+				return GoogleMapsService::MAP_TYPES[strtolower( $value )];
 			},
 		];
 
@@ -76,7 +75,7 @@ class GoogleMapsService extends MappingService {
 			'islist' => true,
 			'post-format' => function ( array $value ) {
 				foreach ( $value as &$part ) {
-					$part = self::$mapTypes[strtolower( $part )];
+					$part = self::MAP_TYPES[strtolower( $part )];
 				}
 
 				return $value;
@@ -120,10 +119,10 @@ class GoogleMapsService extends MappingService {
 
 		$params['typestyle'] = [
 			'default' => $egMapsGMaps3DefTypeStyle,
-			'values' => array_keys( self::$typeControlStyles ),
+			'values' => array_keys( self::TYPE_CONTROL_STYLES ),
 			'message' => 'maps-googlemaps3-par-typestyle',
 			'post-format' => function ( $value ) {
-				return self::$typeControlStyles[strtolower( $value )];
+				return self::TYPE_CONTROL_STYLES[strtolower( $value )];
 			},
 		];
 
@@ -232,66 +231,27 @@ class GoogleMapsService extends MappingService {
 			'default' => false,
 			'message' => 'maps-par-scrollwheelzoom',
 		];
-	}
 
-	/**
-	 * @since 0.6.5
-	 */
-	public function getDefaultZoom() {
-		global $egMapsGMaps3Zoom;
-		return $egMapsGMaps3Zoom;
+		return $params;
 	}
 
 	/**
 	 * Returns the names of all supported map types.
-	 *
-	 * @return array
 	 */
-	public static function getTypeNames() {
-		return array_keys( self::$mapTypes );
+	private function getTypeNames(): array {
+		return array_keys( self::MAP_TYPES );
 	}
 
-	/**
-	 * @see MappingService::getMapId
-	 *
-	 * @since 0.6.5
-	 */
-	public function getMapId( $increment = true ) {
+	public function newMapId(): string {
 		static $mapsOnThisPage = 0;
 
-		if ( $increment ) {
-			$mapsOnThisPage++;
-		}
+		$mapsOnThisPage++;
 
 		return 'map_google3_' . $mapsOnThisPage;
 	}
 
-	/**
-	 * @see MappingService::getResourceModules
-	 *
-	 * @since 1.0
-	 *
-	 * @return array of string
-	 */
-	public function getResourceModules() {
-		return array_merge(
-			parent::getResourceModules(),
-			[ 'ext.maps.googlemaps3' ]
-		);
-	}
-
-	/**
-	 * @see MappingService::getDependencies
-	 *
-	 * @return array
-	 */
-	protected function getDependencies() {
-		return [
-			self::getApiScript(
-				is_string( $GLOBALS['egMapsGMaps3Language'] ) ?
-					$GLOBALS['egMapsGMaps3Language'] : $GLOBALS['egMapsGMaps3Language']->getCode()
-			)
-		];
+	public function getResourceModules(): array {
+		return [ 'ext.maps.googlemaps3', 'ext.sm.googlemaps3ajax' ];
 	}
 
 	public static function getApiScript( $langCode, array $urlArgs = [] ) {
@@ -313,12 +273,8 @@ class GoogleMapsService extends MappingService {
 
 	/**
 	 * Maps language codes to Google Maps API v3 compatible values.
-	 *
-	 * @param string $code
-	 *
-	 * @return string The mapped code
 	 */
-	protected static function getMappedLanguageCode( $code ) {
+	private static function getMappedLanguageCode( string $code ): string {
 		$mappings = [
 			'en_gb' => 'en-gb',// v3 supports en_gb - but wants us to call it en-gb
 			'he' => 'iw',      // iw is googlish for hebrew
@@ -326,9 +282,33 @@ class GoogleMapsService extends MappingService {
 		];
 
 		if ( array_key_exists( $code, $mappings ) ) {
-			$code = $mappings[$code];
+			return $mappings[$code];
 		}
 
 		return $code;
+	}
+
+	public function getDependencyHtml( array $params ): string {
+		$dependencies = [];
+
+		// Only add dependencies that have not yet been added.
+		foreach ( $this->getDependencies() as $dependency ) {
+			if ( !in_array( $dependency, $this->addedDependencies ) ) {
+				$dependencies[] = $dependency;
+				$this->addedDependencies[] = $dependency;
+			}
+		}
+
+		// If there are dependencies, put them all together in a string, otherwise return false.
+		return $dependencies !== [] ? implode( '', $dependencies ) : false;
+	}
+
+	private function getDependencies(): array {
+		return [
+			self::getApiScript(
+				is_string( $GLOBALS['egMapsGMaps3Language'] ) ?
+					$GLOBALS['egMapsGMaps3Language'] : $GLOBALS['egMapsGMaps3Language']->getCode()
+			)
+		];
 	}
 }

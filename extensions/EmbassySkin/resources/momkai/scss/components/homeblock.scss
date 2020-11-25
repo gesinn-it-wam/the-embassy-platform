@@ -1,0 +1,139 @@
+.homeblock {
+  height: auto;
+  min-height: 100vh;
+  background-position: center center;
+  background-size: cover;
+
+  > .container {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .row {
+    display: flex;
+    flex-grow: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+
+    @include media-breakpoint-up(lg) {
+      justify-content: center;
+    }
+  }
+
+  @include media-breakpoint-up(lg) {
+    min-height: 840px;
+    height: 100vh;
+    .row,
+    > .container {
+      height: 100vh;
+      min-height: 840px;
+    }
+  }
+}
+
+.homeblock-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+
+  margin: 40px 0;
+}
+
+.homeblock-title {
+  @include media-breakpoint-up(lg) {
+    font-size: rem-calc(44);
+    line-height: unitless-calc(52, 44);
+  }
+
+  max-width: 770px;
+  font-size: rem-calc(34);
+  line-height: unitless-calc(42, 34);
+}
+
+.homeblock-description {
+  width: 90%;
+  max-width: 660px;
+  margin-bottom: 40px;
+  font-size: rem-calc(23);
+  line-height: unitless-calc(32, 23);
+  text-align: center;
+
+  @include media-breakpoint-up(lg) {
+    margin-bottom: 65px;
+  }
+}
+
+.homeblock-cards {
+  display: block;
+  @include media-breakpoint-up(lg) {
+    margin-bottom: 50px;
+  }
+}
+
+.homeblock-anchor {
+  margin-bottom: 30px;
+}
+
+.homeblock-anchor a {
+  font-family: $te-font-bold;
+  font-size: rem-calc(18);
+  text-decoration: underline;
+  color: $te-black;
+}
+
+.homeblock p {
+  margin-bottom: 0;
+}
+
+// variations of state in homeblock
+.homeblock.is-header {
+  @include media-breakpoint-up(lg) {
+    margin-top: -200px;
+  }
+
+  margin-top: -60px;
+  background-color: $te-white;
+
+  .homeblock-content {
+    @include media-breakpoint-up(lg) {
+      align-items: flex-end;
+    }
+
+    flex-grow: 1;
+    justify-content: center;
+  }
+
+  .homeblock-title {
+    @include media-breakpoint-up(lg) {
+      font-size: rem-calc(96);
+      line-height: unitless-calc(116, 96);
+      text-align: right;
+    }
+  }
+}
+
+.homeblock.is-header .homeblock-anchor a {
+  @include media-breakpoint-up(lg) {
+    bottom: 40px;
+  }
+
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: $te-white;
+}
+
+.homeblock.homeblock--top {
+  background-image: url('#{$embassy-skin-momkai-static-resources}/images/background-homeblock-top.png');
+}
+.homeblock.homeblock--help {
+  background-image: url('#{$embassy-skin-momkai-static-resources}/images/background-homeblock-help.png');
+}
+.homeblock.homeblock--about {
+  background-image: url('#{$embassy-skin-momkai-static-resources}/images/background-homeblock-about.png')
+}

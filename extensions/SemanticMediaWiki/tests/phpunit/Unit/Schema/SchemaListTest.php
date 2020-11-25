@@ -35,6 +35,34 @@ class SchemaListTest extends \PHPUnit_Framework_TestCase {
 		);
 	}
 
+	public function testAdd() {
+
+		$schemaDefinition = new SchemaDefinition(
+			'Bar',
+			[ 'Foo' => [ 'Foobar' => 'test' ], [ 'Foo' => 'Bar' ] ]
+		);
+
+		$schemaList = new SchemaList( [] );
+		$schemaList->add( $schemaDefinition );
+
+		$this->assertEquals(
+			[
+				$schemaDefinition
+			],
+			$schemaList->getList()
+		);
+
+		$instance = new SchemaList( [] );
+		$instance->add(	$schemaList );
+
+		$this->assertEquals(
+			[
+				$schemaDefinition
+			],
+			$instance->getList()
+		);
+	}
+
 	public function testGetMergedList() {
 
 		$data[] = new SchemaDefinition(
@@ -56,6 +84,55 @@ class SchemaListTest extends \PHPUnit_Framework_TestCase {
 				[ 'Foo' => 'Bar' ]
 			],
 			$instance->merge( $instance )
+		);
+	}
+
+	public function testToArray() {
+
+		$data[] = new SchemaDefinition(
+			'Foo',
+			[ 'Foo' => [ 'Bar' => 42 ], 1001 ]
+		);
+
+		$data[] = new SchemaDefinition(
+			'Bar',
+			[ 'Foo' => [ 'Foobar' => 'test' ], [ 'Foo' => 'Bar' ] ]
+		);
+
+		$instance = new SchemaList( $data );
+
+		$this->assertEquals(
+			[
+				'Foo' => [ 'Bar' => 42, 'Foobar' => 'test' ],
+				1001,
+				[ 'Foo' => 'Bar' ]
+			],
+			$instance->toArray()
+		);
+
+		$this->assertEquals(
+			[ 'Bar' => 42, 'Foobar' => 'test' ],
+			$instance->get( 'Foo' )
+		);
+	}
+
+	public function testNewCompartmentIteratorByKey() {
+
+		$data[] = new SchemaDefinition(
+			'Foo',
+			[ 'Foo' => [ 'Bar' => 42 ], 1001 ]
+		);
+
+		$data[] = new SchemaDefinition(
+			'Bar',
+			[ 'Foo' => [ 'Foobar' => 'test' ], [ 'Foo' => 'Bar' ] ]
+		);
+
+		$instance = new SchemaList( $data );
+
+		$this->assertInstanceOf(
+			'\SMW\Schema\CompartmentIterator',
+			$instance->newCompartmentIteratorByKey( 'Foo' )
 		);
 	}
 

@@ -1,0 +1,9 @@
+{
+  "@metadata": {
+    "authors": [
+      "Sebastian Schmid"
+    ]
+  },
+  "embassy-desc": "Embassy Skin",
+  "pf-box-blank-error" : "A message that says something went wrong while filling out the form. This one is necessary because the user will end up in the top of the form after submitting with errors."
+}

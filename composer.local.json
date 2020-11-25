@@ -1,0 +1,20 @@
+{
+    "require": {
+        "mediawiki/graph-viz": "3.1.0",
+        "mediawiki/semantic-media-wiki": "3.1.0",
+        "mediawiki/semantic-compound-queries": "2.0.0",
+        "mediawiki/maps": "7.3.3",
+        "mediawiki/semantic-meta-tags": "2.0.0",
+        "mediawiki/semantic-result-formats": "3.1.0",
+        "mediawiki/chameleon-skin": "2.1.0",
+	"mediawiki/bootstrap": "4.0",
+	"jumbojett/openid-connect-php": "v0.8.0"
+    },
+    "extra": {
+        "merge-plugin": {
+               "include": [
+                       "extensions/OpenIDConnect/composer.json"
+               ]
+        }
+   }
+}

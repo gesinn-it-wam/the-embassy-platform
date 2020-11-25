@@ -1,0 +1,65 @@
+.related-discussion {
+  border-bottom: solid 1px rgba($te-blue, 0.2);
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+}
+
+.related-discussion-title {
+  font-size: rem-calc(18);
+  line-height: unitless-calc(24, 18);
+}
+
+.related-discussion-tags {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: -5px; // to fix aligmenment from tag items
+  & > * {
+    font-size: rem-calc(15);
+    background: $te-white;
+    padding: 7px 10px 10px 10px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    max-height: 36px;
+    white-space: nowrap;
+
+    &:hover {
+      color: $te-blue;
+    }
+  }
+}
+
+.discusssion-tag.grid-item-last {
+  & > * {
+    color: $te-blue !important;
+  }
+}
+
+.related-discussion-date {
+  font-family: $te-font-bold;
+  font-size: rem-calc(16);
+  color: $te-blue;
+  margin-bottom: 10px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 17'%3E%3Cg fill='none' fill-rule='evenodd' stroke='%23567C83' stroke-width='1.4'%3E%3Cpath d='M12.4268 5.814v6.4245H8.2536c-.3251 0-.5889.27-.5889.6029v2.4529c0 .5406-.6418.8077-1.0104.4206L4.218 12.5355a.874.874 0 00-.6543-.297H1.0355V5.814H12.4268zM14.7953 7.6814h.6138c.3249 0 .5887.27.5887.6029v2.453c0 .5406.6418.8077 1.0106.4205l2.436-3.1796a.8745.8745 0 01.6543-.2968h2.5282v-6.646H11.236v2.3424'/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: left center;
+  background-size: 24px 17px;
+  padding-left: 30px;
+}
+
+.related-discussions-seeMore {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 6'%3E%3Cpath fill='%23000' fill-rule='nonzero' d='M0 1.5957L1.5957 0l2.6598 2.66L6.9148 0l1.5957 1.5957-2.66 2.6593.0004.0002L4.2552 5.851 0 1.5957z'/%3E%3C/svg%3E");
+  background-position: right center;
+  background-size: 9px 6px;
+  background-repeat: no-repeat;
+  padding-right: 17px;
+  font-family: $te-font-bold;
+  font-size: rem-calc(16);
+  color: $te-black;
+  display: inline-flex;
+  text-decoration: underline;
+
+  &:hover {
+    cursor: pointer;
+    text-decoration: none;
+  }
+}

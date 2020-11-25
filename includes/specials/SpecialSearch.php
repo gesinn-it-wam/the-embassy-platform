@@ -213,9 +213,9 @@ class SpecialSearch extends SpecialPage {
 		$profiles = $this->getSearchProfiles();
 		if ( $profile === null ) {
 			// BC with old request format
-			$profile = 'advanced';
+			$profile = 'all';
 			foreach ( $profiles as $key => $data ) {
-				if ( $nslist === $data['namespaces'] && $key !== 'advanced' ) {
+				if ( $nslist === $data['namespaces'] && $key !== 'all' ) {
 					$profile = $key;
 				}
 			}

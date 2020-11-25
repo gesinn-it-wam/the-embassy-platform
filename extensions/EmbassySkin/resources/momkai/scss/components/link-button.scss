@@ -1,0 +1,33 @@
+div.link-button,
+a.link-button,
+.link-button {
+  display: inline-flex;
+  align-items: center;
+  background-color: $te-sunfloweryellow;
+  height: 50px;
+  padding: 10px 20px;
+  transition: background-color 150ms ease-in-out;
+  color: $te-black;
+
+  &:hover {
+    text-decoration: none;
+    cursor: pointer;
+    background-color: $te-lightblue;
+  }
+}
+
+.link-button-label {
+  font-family: $font-headings-bold;
+  transform: translateY(2px);
+}
+
+// Modifiers
+div.link-button.link--download,
+a.link-button.link--download,
+.link-button.link--download {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 13'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cpath fill='%23000' fill-rule='nonzero' d='M10.9301 5.2395l-4 3.8066-1.5-1.4275-2.5-2.3791 1.5-1.4275 2.501 2.379 2.499-2.379 1.5 1.4275z'/%3E%3Cpath fill='%23000' d='M6 0h2v6H6z'/%3E%3Cpath stroke='%23000' stroke-width='2' d='M13 8v4H1V8'/%3E%3C/g%3E%3C/svg%3E");
+  background-position: right 20px center;
+  background-repeat: no-repeat;
+  padding-right: 45px;
+  background-size: 14px 13px;
+}

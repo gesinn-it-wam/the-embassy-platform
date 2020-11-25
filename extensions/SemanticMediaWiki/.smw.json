@@ -1,0 +1,12 @@
+{
+    "wikidb01": {
+        "upgrade_key": "946f1e75c3983beb299db4ec3620bdd2fc2cffb4",
+        "maintenance_mode": false,
+        "populate.smw_hash_field_complete": true
+    },
+    "wikidb_wiki": {
+        "upgrade_key": "946f1e75c3983beb299db4ec3620bdd2fc2cffb4",
+        "maintenance_mode": false,
+        "populate.smw_hash_field_complete": true
+    }
+}

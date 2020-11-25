@@ -3,6 +3,7 @@
 namespace SMW\Tests\Elastic;
 
 use SMW\Elastic\ElasticStore;
+use SMW\Options;
 use SMW\Tests\PHPUnitCompat;
 use SMW\Tests\TestEnvironment;
 
@@ -45,6 +46,8 @@ class ElasticStoreTest extends \PHPUnit_Framework_TestCase {
 		$row->smw_id = \SMW\SQLStore\SQLStore::FIXED_PROPERTY_ID_UPPERBOUND;
 		$row->smw_proptable_hash = 'foo';
 		$row->smw_hash = 42;
+		$row->smw_rev = null;
+		$row->smw_touched = null;
 		$row->count = 0;
 
 		$connection = $this->getMockBuilder( '\SMW\MediaWiki\Database' )
@@ -105,7 +108,13 @@ class ElasticStoreTest extends \PHPUnit_Framework_TestCase {
 		$instance->setElasticFactory( $this->elasticFactory );
 		$instance->setMessageReporter( $this->spyMessageReporter );
 
-		$instance->setup( true );
+		$options = new Options(
+			[
+				'verbose' => true
+			]
+		);
+
+		$instance->setup( $options );
 
 		$this->assertContains(
 			'Setting up indices',

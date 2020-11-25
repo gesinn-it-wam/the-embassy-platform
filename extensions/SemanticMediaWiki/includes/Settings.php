@@ -43,6 +43,14 @@ class Settings extends Options {
 	 */
 	public static function newFromGlobals() {
 
+		// #4150
+		// If someone tried to use SMW without proper initialization then something
+		// like "Notice: Undefined index: smwgNamespaceIndex ..." would appear and
+		// to produce a proper error message avoid those by adding a default.
+		if ( !defined( 'SMW_VERSION' ) || !isset( $GLOBALS['smwgNamespaceIndex'] ) ) {
+			NamespaceManager::initCustomNamespace( $GLOBALS );
+		}
+
 		$configuration = [
 			'smwgIP' => $GLOBALS['smwgIP'],
 			'smwgExtraneousLanguageFileDir' => $GLOBALS['smwgExtraneousLanguageFileDir'],
@@ -54,6 +62,7 @@ class Settings extends Options {
 			'smwgImportFileDirs' => $GLOBALS['smwgImportFileDirs'],
 			'smwgImportReqVersion' => $GLOBALS['smwgImportReqVersion'],
 			'smwgSemanticsEnabled' => $GLOBALS['smwgSemanticsEnabled'],
+			'smwgIgnoreExtensionRegistrationCheck' => $GLOBALS['smwgIgnoreExtensionRegistrationCheck'],
 			'smwgUpgradeKey' => $GLOBALS['smwgUpgradeKey'],
 			'smwgJobQueueWatchlist' => $GLOBALS['smwgJobQueueWatchlist'],
 			'smwgEnabledCompatibilityMode' => $GLOBALS['smwgEnabledCompatibilityMode'],
@@ -181,11 +190,16 @@ class Settings extends Options {
 			'smwgSupportSectionTag' => $GLOBALS['smwgSupportSectionTag'],
 			'smwgMandatorySubpropertyParentTypeInheritance' => $GLOBALS['smwgMandatorySubpropertyParentTypeInheritance'],
 			'smwgCheckForRemnantEntities' => $GLOBALS['smwgCheckForRemnantEntities'],
+			'smwgCheckForConstraintErrors' => $GLOBALS['smwgCheckForConstraintErrors'],
 		];
 
 		self::initLegacyMapping( $configuration );
 
+		// Deprecated since 3.1
 		\Hooks::run( 'SMW::Config::BeforeCompletion', [ &$configuration ] );
+
+		// Since 3.1
+		\Hooks::run( 'SMW::Settings::BeforeInitializationComplete', [ &$configuration ] );
 
 		if ( self::$instance === null ) {
 			self::$instance = self::newFromArray( $configuration );
@@ -586,6 +600,7 @@ class Settings extends Options {
 				'smwgHistoricTypeNamespace' => '3.0.0',
 				'smwgEnabledHttpDeferredJobRequest' => '3.0.0',
 				'smwgQueryDependencyAffiliatePropertyDetectionList' => '3.1.0',
+				'smwgValueLookupCacheType' => '3.1.0',
 				'smwgEntityLookupCacheType' => '3.1.0',
 				'smwgEntityLookupCacheLifetime' => '3.1.0',
 				'smwgEntityLookupFeatures' => '3.1.0',

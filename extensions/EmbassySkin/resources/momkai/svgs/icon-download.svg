@@ -1,0 +1,6 @@
+<svg id="icon-download" width="14px" height="13px" viewBox="0 0 14 13" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <polyline id="bottom-shape" stroke="currentColor" stroke-width="2" points="13 8 13 12 1 12 1 8"></polyline>
+        <path d="M6,5.30594374 L6,0 L8,0 L8,5.17296761 L9.43013443,3.81197003 L10.9301344,5.23945567 L6.93013443,9.04608405 L5.43013443,7.61859841 L2.93013443,5.23945567 L4.43013443,3.81197003 L6,5.30594374 Z M6.72931339,6 L6.93013443,6.19111277 L7.13095547,6 L6.72931339,6 Z" id="arrow-down-shape" fill="currentColor" fill-rule="nonzero"></path>
+    </g>
+</svg>

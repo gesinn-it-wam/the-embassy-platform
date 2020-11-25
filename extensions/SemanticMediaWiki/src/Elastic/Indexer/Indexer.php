@@ -12,6 +12,8 @@ use SMW\SQLStore\ChangeOp\ChangeDiff;
 use SMW\SQLStore\ChangeOp\ChangeOp;
 use SMW\Store;
 use SMW\Utils\CharArmor;
+use SMW\MediaWiki\RevisionGuard;
+use SMW\MediaWiki\Collator;
 use SMWDIBlob as DIBlob;
 use Title;
 use Revision;
@@ -371,7 +373,7 @@ class Indexer {
 		}
 
 		if ( $id instanceof Title ) {
-			$id = $id->getLatestRevID( \Title::GAID_FOR_UPDATE );
+			$id = RevisionGuard::getLatestRevID( $id );
 		}
 
 		if ( $id == 0 ) {
@@ -562,12 +564,10 @@ class Indexer {
 
 	private function map_data( $bulk, $changeDiff ) {
 
-		$dbType = $this->store->getInfo( 'db' );
-		$unescape_bytea = isset( $dbType['postgres'] );
-
 		$inserts = [];
 		$inverted = [];
 		$rev = $changeDiff->getAssociatedRev();
+		$propertyList = $changeDiff->getPropertyList( 'id' );
 
 		// In the event that a _SOBJ (or hereafter any inherited object)
 		// is deleted, remove the reference directly from the index since
@@ -580,11 +580,14 @@ class Indexer {
 					continue;
 				}
 
-				$bulk->delete( [ '_id' => $fieldChangeOp->get( 'o_id' ) ] );
+				if (
+					$fieldChangeOp->has( 'p_id' ) &&
+					isset( $propertyList[$fieldChangeOp->has( 'p_id' )] ) &&
+					$propertyList[$fieldChangeOp->has( 'p_id' )]['_type'] === '__sob' ) {
+					$bulk->delete( [ '_id' => $fieldChangeOp->get( 'o_id' ) ] );
+				}
 			}
 		}
-
-		$propertyList = $changeDiff->getPropertyList( 'id' );
 
 		foreach ( $changeDiff->getDataOps() as $tableChangeOp ) {
 			foreach ( $tableChangeOp->getFieldChangeOps() as $fieldChangeOp ) {
@@ -593,7 +596,7 @@ class Indexer {
 					continue;
 				}
 
-				$this->mapRows( $fieldChangeOp, $propertyList, $inserts, $inverted, $unescape_bytea, $rev );
+				$this->mapRows( $fieldChangeOp, $propertyList, $inserts, $inverted, $rev );
 			}
 		}
 
@@ -606,7 +609,7 @@ class Indexer {
 		}
 	}
 
-	private function mapRows( $fieldChangeOp, $propertyList, &$insertRows, &$invertedRows, $unescape_bytea, $rev ) {
+	private function mapRows( $fieldChangeOp, $propertyList, &$insertRows, &$invertedRows, $rev ) {
 
 		// The structure to be expected in ES:
 		//
@@ -638,6 +641,7 @@ class Indexer {
 		// (proleptic Julian calendar)
 
 		$sid = $fieldChangeOp->get( 's_id' );
+		$connection = $this->store->getConnection( 'mw.db' );
 
 		if ( !isset( $insertRows[$sid] ) ) {
 			$insertRows[$sid] = [];
@@ -645,23 +649,8 @@ class Indexer {
 
 		if ( !isset( $insertRows[$sid]['subject'] ) ) {
 			$dataItem = $this->store->getObjectIds()->getDataItemById( $sid );
-			$sort = $dataItem->getSortKey();
-
-			// Use collated sort field if available
-			if ( $dataItem->getOption( 'sort', '' ) !== '' ) {
-				$sort = $dataItem->getOption( 'sort' );
-			}
-
-			// Avoid issue with the Ealstic serializer
-			$sort = CharArmor::removeSpecialChars(
-				CharArmor::removeControlChars( $sort )
-			);
 
 			$subject = $this->makeSubject( $dataItem );
-
-			if ( $sort !== '' ) {
-				$subject['sortkey'] = $sort;
-			}
 
 			if ( $rev != 0 && $subject['subobject'] === '' ) {
 				$subject['rev_id'] = $rev;
@@ -689,13 +678,13 @@ class Indexer {
 
 		if ( $fieldChangeOp->has( 'o_blob' ) && $fieldChangeOp->has( 'o_hash' ) ) {
 			$type = 'txtField';
-			$val = $ins['o_blob'] === null ? $ins['o_hash'] : $ins['o_blob'];
+			$val = $ins['o_hash'];
 
 			// Postgres requires special handling of blobs otherwise escaped
 			// text elements are used as index input
 			// Tests: P9010, Q0704, Q1206, and Q0103
-			if ( $unescape_bytea && $ins['o_blob'] !== null ) {
-				$val = pg_unescape_bytea( $val );
+			if ( $ins['o_blob'] !== null ) {
+				$val = $connection->unescape_bytea( $ins['o_blob'] );
 			}
 
 			// #3020, 3035
@@ -709,10 +698,10 @@ class Indexer {
 			$val = $this->removeLinks( mb_convert_encoding( $val, 'UTF-8', 'UTF-8' ) );
 		} elseif ( $fieldChangeOp->has( 'o_serialized' ) && $fieldChangeOp->has( 'o_blob' ) ) {
 			$type = 'uriField';
-			$val = $ins['o_blob'] === null ? $ins['o_serialized'] : $ins['o_blob'];
+			$val = $ins['o_serialized'];
 
-			if ( $unescape_bytea && $ins['o_blob'] !== null ) {
-				$val = pg_unescape_bytea( $val );
+			if ( $ins['o_blob'] !== null ) {
+				$val = $connection->unescape_bytea( $ins['o_blob'] );
 			}
 
 		} elseif ( $fieldChangeOp->has( 'o_serialized' ) && $fieldChangeOp->has( 'o_sortkey' ) ) {
@@ -781,12 +770,35 @@ class Indexer {
 	}
 
 	private function makeSubject( DIWikiPage $subject ) {
+
+		$title = $subject->getDBKey();
+
+		if ( $subject->getNamespace() !== SMW_NS_PROPERTY || $title[0] !== '_' ) {
+			$title = str_replace( '_', ' ', $title );
+		}
+
+		$sort = $subject->getSortKey();
+		$sort = Collator::singleton()->getSortKey( $sort );
+
+		// Use collated sort field if available
+		if ( $subject->getOption( 'sort', '' ) !== '' ) {
+			$sort = $subject->getOption( 'sort' );
+		}
+
+		// This may loose some non valif UTF-8 characters as it is required by ES
+		// to be strict UTF-8 otherwise the ES indexer will fail with a serialization
+		// error because ES only allows UTF-8 but when the collator applies something
+		// like `uca-default-u-kn` it can produce characters not valid for/by
+		// ES hence the sorting compared to the SQLStore will be different (given
+		// the DB stores the byte representation)
+		$sort = mb_convert_encoding( $sort, 'UTF-8', 'UTF-8' );
+
 		return [
-			'title'     => str_replace( '_', ' ', $subject->getDBKey() ),
+			'title'     => $title,
 			'subobject' => $subject->getSubobjectName(),
 			'namespace' => $subject->getNamespace(),
 			'interwiki' => $subject->getInterwiki(),
-			'sortkey'   => mb_convert_encoding( $subject->getSortKey(), 'UTF-8', 'UTF-8' )
+			'sortkey'   => $sort
 		];
 	}
 

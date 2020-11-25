@@ -968,6 +968,7 @@ $.fn.checkForPipes = function() {
 
 		if ( numUnclosedBrackets === 0 ) {
 			nextPipe = fieldVal.indexOf( '|', curIndex );
+
 			if ( nextPipe < 0 ) {
 				return true;
 			}
@@ -1199,7 +1200,7 @@ $.fn.addInstance = function( addAboveCurInstance ) {
 		return false;
 	}
 
-	if ( ! multipleTemplateList.hasClass('minimizeAll') && multipleTemplateList.height() > 800 ) {
+	if ( ! multipleTemplateList.hasClass('minimizeAll') && multipleTemplateList.height() > 80000 ) {
 		multipleTemplateList.addClass('minimizeAll');
 	}
 	if ( multipleTemplateList.hasClass('minimizeAll') ) {
@@ -1622,18 +1623,20 @@ $.fn.initializeJSElements = function( partOfMultiple ) {
 		});
 
 	var myThis = this;
+
+	//we adding pageFormsInnerEditor class to prevent T252960
 	if ( $.fn.applyVisualEditor ) {
 		if ( partOfMultiple ) {
-			myThis.find(".visualeditor").applyVisualEditor();
+			myThis.find(".visualeditor").addClass('pageFormsInnerEditor').applyVisualEditor();
 		} else {
-			myThis.find(".visualeditor").not(".multipleTemplateWrapper .visualeditor").applyVisualEditor();
+			myThis.find(".visualeditor").not(".multipleTemplateWrapper .visualeditor").addClass('pageFormsInnerEditor').applyVisualEditor();
 		}
 	} else {
 		$(document).bind('VEForAllLoaded', function(e) {
 			if ( partOfMultiple ) {
-				myThis.find(".visualeditor").applyVisualEditor();
+				myThis.find(".visualeditor").addClass('pageFormsInnerEditor').applyVisualEditor();
 			} else {
-				myThis.find(".visualeditor").not(".multipleTemplateWrapper .visualeditor").applyVisualEditor();
+				myThis.find(".visualeditor").not(".multipleTemplateWrapper .visualeditor").addClass('pageFormsInnerEditor').applyVisualEditor();
 			}
 		});
 	}
@@ -1702,13 +1705,17 @@ $(document).ready( function() {
 	}
 
 	$( 'body' ).initializeJSElements(false);
-
-	$('.multipleTemplateInstance').initializeJSElements(true);
+	
+    // handle "create" case with no instances added yet
+    if($('.multipleTemplateInstance').length > 0) {
+		$('.multipleTemplateInstance').initializeJSElements(true);
+	}
+		
 	$('.multipleTemplateAdder').click( function() {
 		$(this).addInstance( false );
 	});
 	$('.multipleTemplateList').each( function() {
-		if ( $(this).height() > 800 ) {
+		if ( $(this).height() > 80000 ) {
 			$(this).addClass('minimizeAll');
 			$(this).possiblyMinimizeAllOpenInstances();
 		}

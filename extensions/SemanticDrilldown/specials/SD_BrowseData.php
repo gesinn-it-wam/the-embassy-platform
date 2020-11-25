@@ -1338,7 +1338,8 @@ END;
 		// only one set of params is handled for now
 		if ( count( $all_display_params ) > 0 ) {
 			$display_params = array_map( 'trim', $all_display_params[0] );
-			SMWQueryProcessor::processFunctionParams( $display_params, $querystring, $params, $printouts );
+#			SMWQueryProcessor::processFunctionParams( $display_params, $querystring, $params, $printouts );
+			list( $querystring, $params, $printouts ) = SMWQueryProcessor::getComponentsFromFunctionParams( $display_params, false );
 		}
 		if ( ! empty( $querystring ) ) {
 			$query = SMWQueryProcessor::createQuery( $querystring, $params );
@@ -1366,40 +1367,12 @@ END;
 		$prresult = $printer->getResult(
 			$r,
 			$params,
-			SMW_OUTPUT_HTML
+			SMW_OUTPUT_WIKI
 		);
 
 		$prtext = is_array( $prresult ) ? $prresult[0] : $prresult;
 
-		SMWOutputs::commitToOutputPage( $out );
-
-		// Crappy hack to get the contents of SMWOutputs::$mHeadItems,
-		// which may have been set in the result printer, and dump into
-		// headItems of $out.
-		// How else can we do this?
-		global $wgParser;
-		SMWOutputs::commitToParser( $wgParser );
-		if ( ! is_null( $wgParser->mOutput ) ) {
-			$headItems = $wgParser->getOutput()->getHeadItems();
-			foreach ( $headItems as $key => $item ) {
-				$out->addHeadItem( $key, $item );
-			}
-			// Force one more parser function, so links appear.
-			$wgParser->replaceLinkHolders( $prtext );
-		}
-
-		$html = [];
-		$html[] = $prtext;
-
-		if ( !$this->listoutput ) {
-			$html[] = $this->closeList();
-		}
-
-		$html = $this->listoutput
-			? $wgContLang->listToText( $html )
-			: implode( '', $html );
-
-		$out->addHTML( $html );
+		$out->addWikiText( $prtext );
 
 		// Add outro template
 		$footerPage = SDUtils::getDrilldownFooter( $this->category );

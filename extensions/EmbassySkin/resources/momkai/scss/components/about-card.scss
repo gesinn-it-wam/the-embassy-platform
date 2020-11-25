@@ -1,0 +1,151 @@
+.about-card {
+  @include media-breakpoint-up(md) {
+    flex-direction: row;
+    align-items: center;
+    max-width: 100%;
+    margin-bottom: 0;
+  }
+
+  display: flex;
+  flex-direction: column;
+  max-width: 320px;
+  margin: 0 auto 30px;
+  color: $te-black;
+  background: $te-white;
+
+  &:hover {
+    text-decoration: none;
+    color: $te-black;
+  }
+}
+
+.about-card-head {
+  @include media-breakpoint-up(md) {
+    max-width: 100px;
+    max-height: 150px;
+  }
+
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  align-items: center;
+  min-width: 45%;
+  min-height: 140px;
+  max-height: 250px;
+  text-align: center;
+
+  &::after {
+    @include media-breakpoint-up(md) {
+      display: none;
+    }
+
+    position: absolute;
+    z-index: 0;
+    bottom: -30px;
+    left: 0;
+    width: 100%;
+    height: 50px;
+    content: ' ';
+    transform: skewY(5deg);
+    background-color: $te-white;
+  }
+}
+
+.about-card-title {
+  @include media-breakpoint-up(md) {
+    font-size: 1.375rem;
+    line-height: 1.75rem;
+  }
+
+  margin-bottom: 0;
+}
+
+.about-card-text {
+  margin-bottom: 0;
+  padding-top: 20px;
+}
+
+.about-card-content {
+  @include media-breakpoint-up(md) {
+    text-align: left;
+  }
+
+  position: relative;
+  padding: 30px 20px;
+}
+
+.about-card-image {
+  @include media-breakpoint-up(md) {
+    height: 100% !important; // hack to avoid SMW overwrite
+  }
+
+  width: 100%;
+  height: auto;
+
+  object-fit: cover;
+}
+
+// homeblock about cards
+.homeblock-aboutcards {
+  @include media-breakpoint-up(md) {
+    display: grid;
+    max-width: 860px;
+    margin: 0 30px 50px;
+
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    grid-column-gap: 30px;
+    grid-row-gap: 30px;
+  }
+
+  .about-card {
+    &:nth-child(1) {
+      grid-area: 1 / 1 / 3 / 2;
+      grid-row-start: 1;
+      grid-column-start: 1;
+      grid-row-end: 3;
+      grid-column-end: 2;
+
+      .about-card-head {
+        min-height: 180px;
+        max-height: 300px;
+
+        .about-card-image {
+          object-position: 0 60px;
+        }
+      }
+    }
+
+    &:nth-child(1) {
+      @include media-breakpoint-up(md) {
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 85%);
+
+        .about-card-head {
+          flex-grow: 1;
+          height: 100%;
+          max-height: 100%;
+
+          .about-card-image {
+            object-position: 0 0;
+          }
+        }
+      }
+    }
+
+    &:nth-child(2) {
+      grid-area: 1 / 2 / 2 / 3;
+      grid-row-start: 1;
+      grid-column-start: 2;
+      grid-row-end: 2;
+      grid-column-end: 3;
+    }
+
+    &:nth-child(3) {
+      grid-area: 2 / 2 / 3 / 3;
+      grid-row-start: 2;
+      grid-column-start: 2;
+      grid-row-end: 3;
+      grid-column-end: 3;
+    }
+  }
+}

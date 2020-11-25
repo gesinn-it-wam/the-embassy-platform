@@ -145,7 +145,14 @@ class Query {
 	 * @param string $table
 	 */
 	public function table( ...$table ) {
-		$this->table = $this->connection->tableName( $table[0] ) . ( isset( $table[1] ) ? " AS " . $table[1] : '' );
+
+		if ( strpos( $table[0], 'SELECT') !== false ) {
+			$tableName = '(' . $table[0] . ')';
+		} else {
+			$tableName = $this->connection->tableName( $table[0] );
+		}
+
+		$this->table = $tableName . ( isset( $table[1] ) ? " AS " . $table[1] : '' );
 	}
 
 	/**
@@ -166,7 +173,7 @@ class Query {
 			foreach ( $join[1] as $table => $value ) {
 
 				if ( is_string( $table ) ) {
-					$value = $value{0} . $value{1} === 'ON' ? "$value" : "AS $value";
+					$value = $value[0] . $value[1] === 'ON' ? "$value" : "AS $value";
 					$value = $this->connection->tableName( $table ) . " $value";
 				}
 
@@ -287,7 +294,11 @@ class Query {
 	 * @param string $value
 	 */
 	public function option( $key, $value ) {
-		$this->options[$key] = $value;
+		if ( $value === null ) {
+			unset( $this->options[$key] );
+		} else {
+			$this->options[$key] = $value;
+		}
 	}
 
 	/**

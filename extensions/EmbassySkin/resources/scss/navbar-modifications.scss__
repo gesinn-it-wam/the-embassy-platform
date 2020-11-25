@@ -1,0 +1,138 @@
+.active-link-after{
+  position:absolute;
+  bottom:0;
+  left:50%;
+  width:100%;
+  height:2px;
+  content:" ";
+  -webkit-transform:translateX(-50%);
+  transform:translateX(-50%);
+  background-color:#f6d30b
+}
+
+
+// ns-7600: Theme
+body.page-Themes .navigation .nav a#n-Themes:after,
+body.page-Themes .navigation .nav a#n-Themes,
+body.page-Category_Theme .navigation .nav a#n-Themes,
+body.ns-7600 .navigation .nav a#n-Themes{
+
+  &:after{
+    @extend .active-link-after;
+  }
+
+  @include media-breakpoint-down(lg) {
+    color:#fff;
+  }
+}
+
+// ns-7700: Resource
+body.page-Resources .navigation .nav a#n-Resources:after,
+body.page-Resources .navigation .nav a#n-Resources,
+body.page-Category_Resource .navigation .nav a#n-Resources,
+body.ns-7700 .navigation .nav a#n-Resources{
+
+  &:after{
+    @extend .active-link-after;
+  }
+
+  @include media-breakpoint-down(lg) {
+    color:#fff;
+  }
+}
+
+// ns-7800: Instruction
+body.page-Instructions .navigation .nav a#n-Instructions:after,
+body.page-Instructions .navigation .nav a#n-Instructions,
+body.page-Category_Instruction .navigation .nav a#n-Instructions,
+body.ns-7800 .navigation .nav a#n-Instructions{
+
+  &:after{
+    @extend .active-link-after;
+  }
+
+  @include media-breakpoint-down(lg) {
+    color:#fff;
+  }
+}
+
+// Home
+body.page-Main_Page .navigation .nav a#n-Home{
+  &:after{
+    @extend .active-link-after;
+    @include media-breakpoint-up(lg) {
+      background-color: #000 !important;
+    }
+  }
+
+  @include media-breakpoint-down(lg) {
+    color:#fff;
+  }
+}
+
+// Discussion
+body.page-Discussions .navigation .nav a#n-Discussions{
+  color:#fff;
+  &:after{
+    @extend .active-link-after;
+  }
+
+  @include media-breakpoint-down(lg) {
+    color:#fff;
+  }
+}
+
+// Training
+body.page-Training .navigation .nav a#n-Training{
+
+  &:after{
+    @extend .active-link-after;
+  }
+
+  @include media-breakpoint-down(lg) {
+    color:#fff;
+  }
+}
+
+// About
+body.page-About .navigation .nav a#n-About{
+
+  &:after{
+    @extend .active-link-after;
+  }
+
+  @include media-breakpoint-down(lg) {
+    color:#fff;
+  }
+}
+
+
+@media (max-width:1023.98px){
+  body.page-Category_Theme .navigation .nav a#n-Themes:after,
+  body.ns-7600 .navigation .nav a#n-Themes:after,
+  body.page-Themes .navigation .nav a#n-Themes:after,
+  body.page-Category_Resource .navigation .nav a#n-Resources:after,
+  body.ns-7700 .navigation .nav a#n-Resources:after,
+  body.page-Resources .navigation .nav a#n-Resources:after,
+  body.page-Main_Page .navigation .nav a#n-Home:after,
+  body.page-Discussions .navigation .nav a#n-Discussions:after,
+  body.page-Training .navigation .nav a#n-Training:after,
+  body.page-About .navigation .nav a#n-About:after{
+    background-color:transparent
+  }
+}
+
+@media (min-width:1024px){
+  body.page-Category_Theme .navigation .nav a#n-Themes,
+  body.ns-7600 .navigation .nav a#n-Themes,
+  body.page-Themes .navigation .nav a#n-Themes:after,
+  body.page-Category_Resource .navigation .nav a#n-Resources,
+  body.ns-7700 .navigation .nav a#n-Resources,
+  body.page-Resources .navigation .nav a#n-Resources:after,
+  body.page-Main_Page .navigation .nav a#n-Home,
+  body.page-Discussions .navigation .nav a#n-Discussions,
+  body.page-Training .navigation .nav a#n-Training,
+  body.page-About .navigation .nav a#n-About{
+    color:#000;
+  }
+}

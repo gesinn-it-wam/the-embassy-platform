@@ -132,6 +132,7 @@
 					data.task.list,
 					{
 						'isFromCache': data.task.isFromCache,
+						'cacheLifetime': data.task.cacheTTL,
 						'timestamp': data.task.time
 					}
 				);
@@ -318,6 +319,36 @@
 					'limit': $( this ).data( 'limit' ),
 					'offset': 0
 				} )
+			} );
+		} );
+
+		/**
+		 * Prettify the JSON display
+		 */
+		$( '#smw-admin-querycache-json,#smw-admin-configutation-json' ).each( function() {
+
+				$( this ).removeClass( 'smw-json-placeholder' );
+
+				var container = $( "#smw-json-container" ),
+					json = container.find( '.smw-json-data' ).text();
+
+				if ( json !== '' ) {
+					smw.jsonview.init( container, json );
+				};
+		} );
+
+		/**
+		 * Generate table statistics via the API
+		 */
+		$( '#smw-admin-supplementary-table-statistics' ).each( function() {
+
+			instance.setContext( $( this ) );
+
+			instance.api( {
+				formatversion: 2,
+				action: 'smwtask',
+				task: 'table-statistics',
+				params: JSON.stringify( [] )
 			} );
 		} );
 

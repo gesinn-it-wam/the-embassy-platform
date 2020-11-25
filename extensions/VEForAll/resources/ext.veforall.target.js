@@ -30,6 +30,10 @@
 			config.toolbarConfig.floatable = true;
 		}
 
+		if ( node.hasClass( 'pageFormsInnerEditor' ) ) {
+			this.editorInsidePageForm = true;
+		}
+
 		mw.veForAll.Target.parent.call( this, config );
 
 		// HACK: stop VE's education popups from appearing (T116643)
@@ -58,7 +62,8 @@
 			type: 'menu',
 			include: [ { group: 'format' } ],
 			promote: [ 'paragraph' ],
-			demote: [ 'preformatted', 'blockquote' ]
+			demote: [ 'preformatted', 'blockquote' ],
+			exclude: ['heading1', 'heading2', 'heading3', 'heading4', 'heading5', 'heading6']
 		},
 		// Text style
 		{
@@ -68,6 +73,14 @@
 		},
 		// Link
 		{ include: [ 'link' ] },
+		{
+			header: OO.ui.deferMsg( 'cite-ve-toolbar-group-label' ),
+			title: OO.ui.deferMsg( 'cite-ve-toolbar-group-label' ),
+			icon: 'reference',
+			promote: [ 'reference' ],
+			classes: ['ve-test-toolbar-cite' ],
+			include: [ 'reference' ]
+		},
 		// Structure
 		{
 			header: OO.ui.deferMsg( 'visualeditor-toolbar-structure' ),
@@ -75,7 +88,7 @@
 			type: 'list',
 			icon: 'listBullet',
 			include: [ { group: 'structure' } ],
-			demote: [ 'outdent', 'indent' ]
+			exclude: [ 'outdent', 'indent' ]
 		},
 		// Insert
 		{
@@ -84,7 +97,7 @@
 			type: 'list',
 			icon: 'add',
 			label: '',
-			include: [ 'insertTable', 'specialCharacter', 'warningblock', 'preformatted', 'infoblock', 'ideablock', 'dontblock', 'pinblock' ]
+			include: [ 'insertTable', 'media', 'specialCharacter', 'warningblock', 'preformatted', 'infoblock', 'ideablock', 'dontblock', 'pinblock' ]
 		}
 		// Special character toolbar
 		// { include: [ 'specialCharacter' ] }
@@ -227,6 +240,35 @@
 		return mw.config.get( 'wgPageName' ).split( /(\\|\/)/g ).pop();
 	};
 
+	mw.veForAll.Target.prototype.fixTablePipesInner = function ( partToReplace ) {
+		var i,
+			currentChar,
+			lastChar = '',
+			insideTemplate = false,
+			replacementStr = '';
+		for ( i = 0; i < partToReplace.length; i++ ) {
+			currentChar = partToReplace.charAt( i );
+			if ( currentChar === '[' || currentChar + lastChar === '{{' ) {
+				insideTemplate = true;
+			} else if ( currentChar === ']' || currentChar + lastChar === '}}' ) {
+				insideTemplate = false;
+			}
+			lastChar = currentChar;
+			replacementStr += ( !insideTemplate && currentChar === '|' ) ? '{{!}}' : currentChar;
+		}
+		return replacementStr;
+	};
+
+	// Page Forms can't use tables defined by pipes (|) but that is exactly what Parsoid returns.
+	mw.veForAll.Target.prototype.fixTablePipes = function ( wikitext ) {
+		var target = this;
+		wikitext = wikitext.replace( /\{\{!\}\}/g, '|' );
+		wikitext = wikitext.replace( /\{\|(\s|\S)+\|\}/g, function ( partToReplace ) {
+			return target.fixTablePipesInner( partToReplace );
+		} );
+		return wikitext;
+	};
+
 	mw.veForAll.Target.prototype.convertToWikiText = function ( content ) {
 		var target = this,
 			oldFormat = 'html',
@@ -246,7 +288,14 @@
 			content: content,
 			title: this.getPageName()
 		} ).then( function ( data ) {
-			$( target.$node ).val( data[ 'veforall-parsoid-utils' ].content );
+
+			var content = data[ 'veforall-parsoid-utils' ].content;
+			//in page forms convert pipes bbefore updatin content (see T)
+			if( target.editorInsidePageForm ){
+				content = target.fixTablePipes( content )
+			}
+			$( target.$node ).val( content );
+
 			$( target.$node ).change();
 
 			$( target.$node )

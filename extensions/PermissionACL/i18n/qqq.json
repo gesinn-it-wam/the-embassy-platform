@@ -1,0 +1,9 @@
+{
+  "@metadata": {
+    "authors": [
+      "Sebastian Schmid (gesinn.it GmbH & Co. KG)",
+      "Jan Vavříček"
+    ]
+  },
+  "permissionacl-desc": "The PermissionACL extension implements a way to restrict access to specific {namespaces, pages, categories} based on user group or user name. This provides a more fine grained security model than the one provided by the default $wgGroupPermissions."
+}

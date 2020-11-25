@@ -39,12 +39,6 @@ class QueryHandler {
 	 */
 	public $title = '';
 
-	/**
-	 * Make a separate link to the title or not?
-	 * @var boolean
-	 */
-	public $titleLinkSeparate = false;
-
 	private $queryResult;
 
 	private $outputMode;
@@ -60,12 +54,6 @@ class QueryHandler {
 	 * @var boolean
 	 */
 	private $linkAbsolute;
-
-	/**
-	 * The text used for the link to the page (if it's created). $1 will be replaced by the page name.
-	 * @var string
-	 */
-	private $pageLinkText = '$1';
 
 	/**
 	 * A separator to use between the subject and properties in the text field.
@@ -149,13 +137,6 @@ class QueryHandler {
 
 	public function setShowSubject( bool $showSubject ) {
 		$this->showSubject = $showSubject;
-	}
-
-	/**
-	 * Sets the text for the link to the page when separate from the title.
-	 */
-	public function setPageLinkText( string $text ) {
-		$this->pageLinkText = $text;
 	}
 
 	public function setLinkStyle( string $link ) {
@@ -274,13 +255,15 @@ class QueryHandler {
 		if ( !$this->showSubject ) {
 			return '';
 		}
-
+		
+		$dataItem = $object->getDataItem();
+		
 		if ( $this->showArticleLink() ) {
-			if ( !$this->titleLinkSeparate && $this->linkAbsolute ) {
+			if ( $this->linkAbsolute ) {
 				$text = Html::element(
 					'a',
-					[ 'href' => $object->getTitle()->getFullUrl() ],
-					$this->hideNamespace ? $object->getText() : $object->getTitle()->getFullText()
+					[ 'href' => $dataItem->getTitle()->getFullUrl() ],
+					$this->hideNamespace ? $object->getText() : $dataItem->getTitle()->getFullText()
 				);
 			} else {
 				if ( $this->hideNamespace ) {
@@ -290,26 +273,10 @@ class QueryHandler {
 				}
 			}
 		} else {
-			$text = $this->hideNamespace ? $object->getText() : $object->getTitle()->getFullText();
+			$text = $this->hideNamespace ? $object->getText() : $dataItem->getTitle()->getFullText();
 		}
 
-		$text = '<b>' . $text . '</b>';
-
-		if ( !$this->titleLinkSeparate ) {
-			return $text;
-		}
-
-		$txt = $object->getTitle()->getText();
-
-		if ( $this->pageLinkText !== '' ) {
-			$txt = str_replace( '$1', $txt, $this->pageLinkText );
-		}
-
-		return $text . Html::element(
-			'a',
-			[ 'href' => $object->getTitle()->getFullUrl() ],
-			$txt
-		);
+		return '<b>' . $text . '</b>';
 	}
 
 	private function showArticleLink() {
@@ -322,7 +289,7 @@ class QueryHandler {
 	private function handleResultProperty( SMWDataValue $object, SMWPrintRequest $printRequest ): string {
 		if ( $this->hasTemplate() ) {
 			if ( $object instanceof SMWWikiPageValue ) {
-				return $object->getTitle()->getPrefixedText();
+				return $object->getDataItem()->getTitle()->getPrefixedText();
 			}
 
 			return $object->getLongText( SMW_OUTPUT_WIKI, null );

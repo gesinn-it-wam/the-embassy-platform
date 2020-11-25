@@ -46,7 +46,7 @@ class OutdatedDisposer {
 	public function run() {
 
 		$this->messageReporter->reportMessage( "Removing outdated entities and query links ..." );
-		$this->messageReporter->reportMessage( "\n   ... checking entities ..." );
+		$this->messageReporter->reportMessage( "\n   ... checking outdated entities ..." );
 
 		$resultIterator = $this->entityIdDisposerJob->newOutdatedEntitiesResultIterator();
 
@@ -55,7 +55,7 @@ class OutdatedDisposer {
 		}
 
 		$this->messageReporter->reportMessage( "\n   ... done." );
-		$this->messageReporter->reportMessage( "\n   ... checking query links ..." );
+		$this->messageReporter->reportMessage( "\n   ... checking invalid query links ..." );
 
 		$resultIterator = $this->entityIdDisposerJob->newOutdatedQueryLinksResultIterator();
 

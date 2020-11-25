@@ -1,0 +1,84 @@
+{
+	"name": "EmbassySkin",
+	"version": "1.0.0",
+	"author": [
+		"Sebastian Schmid (gesinn.it GmbH & Co. KG)"
+	],
+	"url": "http://gitlab/mediawiki-extension/EmbassySkin",
+	"descriptionmsg": "embassy-desc",
+	"license-name": "MIT",
+	"type": "other",
+	"requires": {
+		"MediaWiki": ">= 1.27"
+	},
+	"AutoloadClasses": {
+		"EmbassySkin\\Hooks": "Hooks.php",
+		"EmbassySkin\\Util": "includes/Util.php",
+		"Skins\\Chameleon\\Components\\BurgerMenu": "component/BurgerMenu.php",
+		"Skins\\Chameleon\\Components\\MainMenu": "component/MainMenu.php",
+		"Skins\\Chameleon\\Components\\CustomLogo": "component/CustomLogo.php",
+		"Skins\\Chameleon\\Components\\CustomMain": "component/CustomMain.php",
+		"Skins\\Chameleon\\Components\\CustomLogin": "component/CustomLogin.php",
+		"Skins\\Chameleon\\Components\\MobileSearch": "component/MobileSearch.php",
+		"Skins\\Chameleon\\Components\\ContentWithSideBar": "component/ContentWithSideBar.php",
+		"Skins\\Chameleon\\Components\\Footer": "component/Footer.php"
+	},
+	"Hooks": {
+		"BeforePageDisplay": [
+			"EmbassySkin\\Hooks::EmbassySkinOnBeforePageDisplay"
+		]
+	},
+	"callback": "EmbassySkin\\Hooks::initExtension",
+	"MessagesDirs": {
+		"EmbassySkin": [ "i18n" ]
+	},
+	"ResourceFileModulePaths": {
+		"localBasePath": "",
+		"remoteExtPath": "EmbassySkin"
+	},
+	"ResourceModules": {
+		"ext.EmbassySkin": {
+			"scripts": [
+				"resources/js/EmbassySkin.js"
+			],
+			"messages": [
+				"pf-box-blank-error"
+			],
+			"dependencies":[
+				"oojs-ui",
+				"ext.momkai.components"
+			]
+		},
+		"ext.momkai.components": {
+			"scripts": [
+				"resources/momkai/js/navigation.js",
+				"resources/momkai/js/video-button.js",
+				"resources/momkai/js/te-dropdown-menu.js",
+				"resources/momkai/js/masonry-columns.js",
+				"resources/momkai/js/drilldown-cleanup.js",
+				"resources/momkai/js/read-more.js",
+				"resources/momkai/js/tabs.js",
+				"resources/momkai/js/steps-foldout.js"
+			],
+			"dependencies": [
+				"ext.momkai.external.libs"
+			],
+			"position": [
+				"bottom"
+			]
+		},
+		"ext.momkai.external.libs": {
+			"scripts": [
+				"resources/momkai/static/lib/js/macy2.js"
+			],
+			"position": [
+				"top"
+			]
+		}
+	},
+	"config": {
+		"EmbassyParseFooter": false,
+		"EmbassyShowVisualEditIfFormAvailable" : false
+	},
+	"manifest_version": 2
+}

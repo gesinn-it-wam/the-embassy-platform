@@ -1,0 +1,39 @@
+// Element that has read-more content
+.has-readmore {
+  height: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 50px;
+
+  &.open {
+    height: auto
+  }
+
+}
+
+// Button
+.read-more {
+  display: block;
+  font-family: $te-font-bold;
+  font-size: rem-calc(16);
+  color: $te-black;
+  text-decoration: underline;
+  margin: -30px 0 50px;
+
+  background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23000' fill-rule='evenodd'%3E%3Cpath d='M1.6784 8.2092L3.1936 6.694l6.566 6.566-1.5152 1.5152z'/%3E%3Cpath d='M13.2444 6.694l1.5152 1.5152-6.566 6.566L6.6784 13.26z'/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 85px 4px;
+  background-size: 12px;
+  padding-right: 30px;
+
+
+  &:hover {
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+}
+
+.readmore-disabled {
+  height: auto;
+}

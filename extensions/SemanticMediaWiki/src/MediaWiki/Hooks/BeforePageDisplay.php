@@ -23,6 +23,31 @@ use Html;
 class BeforePageDisplay extends HookHandler {
 
 	/**
+	 * @since 3.1
+	 *
+	 * @param OutputPage $outputPage
+	 */
+	public function informAboutExtensionAvailability( OutputPage $outputPage ) {
+
+		if ( $this->getOption( 'SMW_EXTENSION_LOADED' ) ) {
+			return;
+		}
+
+		$title = $outputPage->getTitle();
+
+		if ( $title === null || !$title->isSpecial( 'Version' ) ) {
+			return;
+		}
+
+		$outputPage->prependHTML(
+			'<div class="errorbox" style="display:block;">Semantic MediaWiki '.
+			'was installed but not enabled on this wiki. Please consult the ' .
+			'<a href="https://www.semantic-mediawiki.org/wiki/Extension_registration">help page</a> for '.
+			'instructions and further assistances.</div>'
+		);
+	}
+
+	/**
 	 * @since 1.9
 	 *
 	 * @param OutputPage $outputPage,
@@ -91,7 +116,21 @@ class BeforePageDisplay extends HookHandler {
 			[
 				'class' => 'smw-callout smw-callout-error plainlinks'
 			],
-			Message::get( 'smw-install-incomplete-intro' ) . "<ul>$html</ul>"
+			Html::rawElement(
+				'div',
+				[
+					'class' => 'title',
+					'style' => 'margin-bottom:10px'
+				],
+				Message::get( 'smw-install-incomplete-tasks-title' )
+			) . Html::rawElement(
+				'div',
+				[
+					'style' => 'margin-bottom:10px'
+				],
+				Message::get( 'smw-install-incomplete-intro' )
+			) .
+			"<ul>$html</ul>"
 		);
 	}
 

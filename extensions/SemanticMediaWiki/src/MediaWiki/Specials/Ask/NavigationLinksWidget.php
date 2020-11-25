@@ -10,6 +10,7 @@ use SMW\Utils\Pager;
 use SMWInfolink as Infolink;
 use Title;
 use SMW\Utils\HtmlTabs;
+use SMW\Utils\UrlArgs;
 
 /**
  * @license GNU GPL v2+
@@ -161,8 +162,8 @@ class NavigationLinksWidget {
 		}
 
 		$urlArgs = clone $urlArgs;
-		$limit = $urlArgs->get( 'limit' );
-		$offset = $urlArgs->get( 'offset' );
+		$limit = (int)$urlArgs->get( 'limit' );
+		$offset = (int)$urlArgs->get( 'offset' );
 
 		// Remove any contents that is cruft
 		if ( strpos( $urlArgs->get( 'p' ), 'cl=' ) !== false ) {

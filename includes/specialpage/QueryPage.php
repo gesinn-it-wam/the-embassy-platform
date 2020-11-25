@@ -641,16 +641,23 @@ abstract class QueryPage extends SpecialPage {
 		if ( $this->shownavigation ) {
 			$out->addHTML( $this->getPageHeader() );
 			if ( $this->numRows > 0 ) {
+				$out->addHTML( Xml::openElement( 'div', [ 'class' => 'mw-resultsinrange' ] ) );
 				$out->addHTML( $this->msg( 'showingresultsinrange' )->numParams(
 					min( $this->numRows, $this->limit ), # do not show the one extra row, if exist
 					$this->offset + 1, ( min( $this->numRows, $this->limit ) + $this->offset ) )->parseAsBlock() );
+				$out->addHTML( Xml::closeElement( 'div' ) );
 				# Disable the "next" link when we reach the end
 				$miserMaxResults = $this->getConfig()->get( 'MiserMode' )
 					&& ( $this->offset + $this->limit >= $this->getMaxResults() );
 				$atEnd = ( $this->numRows <= $this->limit ) || $miserMaxResults;
 				$paging = $this->getLanguage()->viewPrevNext( $this->getPageTitle( $par ), $this->offset,
 					$this->limit, $this->linkParameters(), $atEnd );
-				$out->addHTML( '<p>' . $paging . '</p>' );
+
+				$out->addHTML( Xml::openElement( 'div', [ 'class' => 'mw-paging' ] ) );
+				$out->addHTML( $paging );
+				$out->addHTML( Xml::closeElement( 'div' ) );
+
+				//$out->addHTML( '<p>' . $paging . '</p>' );
 			} else {
 				# No results to show, so don't bother with "showing X of Y" etc.
 				# -- just let the user know and give up now
@@ -672,7 +679,9 @@ abstract class QueryPage extends SpecialPage {
 
 		# Repeat the paging links at the bottom
 		if ( $this->shownavigation ) {
-			$out->addHTML( '<p>' . $paging . '</p>' );
+			$out->addHTML( Xml::openElement( 'div', [ 'class' => 'mw-paging' ] ) );
+			$out->addHTML( $paging );
+			$out->addHTML( Xml::closeElement( 'div' ) );
 		}
 
 		$out->addHTML( Xml::closeElement( 'div' ) );

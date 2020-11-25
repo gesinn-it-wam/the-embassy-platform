@@ -56,7 +56,7 @@ class SpecialBrowse extends SpecialPage {
 		}
 
 		// Auto-generated link is marked with a leading :
-		if ( $query !== '' && $query{0} === ':' ) {
+		if ( $query !== '' && $query[0] === ':' ) {
 			$articletext = Encoder::unescape( $query );
 		} elseif ( $articletext === null ) {
 			$articletext = $query;
@@ -72,7 +72,7 @@ class SpecialBrowse extends SpecialPage {
 		);
 
 		$out = $this->getOutput();
-		$out->setHTMLTitle( $dataValue->getTitle() );
+		$out->setHTMLTitle( $dataValue->getWikiValue() );
 
 		$out->addModuleStyles( [
 			'mediawiki.ui',
@@ -100,9 +100,10 @@ class SpecialBrowse extends SpecialPage {
 		}
 
 		if ( !$dataValue->isValid() ) {
+			$error = '';
 
 			foreach ( $dataValue->getErrors() as $error ) {
-				$error = Message::decode( $error, Message::TEXT, Message::USER_LANGUAGE );
+				$error .= Message::decode( $error, Message::TEXT, Message::USER_LANGUAGE );
 			}
 
 			$html = Html::rawElement(
@@ -195,7 +196,9 @@ class SpecialBrowse extends SpecialPage {
 		}
 
 		if ( $dataValue->isValid() ) {
-			$link = SpecialPage::getTitleFor( 'ExportRDF', $dataValue->getTitle()->getPrefixedText() );
+			$dataItem = $dataValue->getDataItem();
+
+			$title = SpecialPage::getTitleFor( 'ExportRDF', $dataItem->getTitle()->getPrefixedText() );
 
 			$this->getOutput()->setIndicators( [
 				'browse' => Html::rawElement(
@@ -206,7 +209,7 @@ class SpecialBrowse extends SpecialPage {
 					Html::rawElement(
 						'a',
 						[
-							'href' => $link->getLocalUrl( 'syntax=rdf' )
+							'href' => $title->getLocalUrl( 'syntax=rdf' )
 						],
 						'RDF'
 					)

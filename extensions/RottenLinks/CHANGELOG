@@ -1,0 +1,45 @@
+== ChangeLog for RottenLinks ==
+
+=== 1.0.8 (22-03-2020) ===
+* Fixed handling of protocol independent links (//meta.miraheze.org/).
+* Introduced excluding a website from being checked.
+* Add link to MediaWiki docs to form the basis of a help page (for now?).
+* Converted to MediaWiki Config Registry.
+* Limit display length of URLs to 50 characters (for now?).
+
+=== 1.0.7 (08-03-2019) ===
+* Fix date handling.
+
+=== 1.0.6 (05-02-2019) ===
+* Remove namespace exclusion.
+* Fix limit selection.
+* Show HTTP code on statistics.
+
+=== 1.0.5 (03-02-2019) ===
+* Introduce ability to exclude namespaces ($wgRottenLinksExcludeNamespaces).
+* Allow page limit to be configurable by end user.
+* Allow controlling of how links open using a config variable.
+* Add viewing of link statistics to Special:RottenLinks.
+* Run time statistics.
+* Link colourisation.
+
+=== 1.0.4 (01-11-2018) ===
+* Fix path of LinkSearch.
+
+=== 1.0.3 (01-11-2018) ===
+* Introduce the ability to exclude special protocols ($wgRottenLinksExcludeProtocols)
+* Reduce page limit from 50 to 25.
+* Show a links usage on the wiki.
+* Added the ability to filter out good HTTP responses (what is bad is considered by $wgRottenLinksBadCodes, will be used later for other purposes).
+
+=== 1.0.2 (29-10-2018) ===
+* Make cURL timeout configuable  with "wgRottenLinksCurlTimeout"
+* Fixes a issue when curl was not timing out.
+
+=== 1.0.1 (16-10-2018) ===
+* Lowered cURL to 30 seconds from PHP standard 300.
+* Added a code 0 text input as standard MediaWiki doesn't recognise code 0 responses.
+* Added qqq.json i18n.
+
+=== 1.0.0 (14-10-2018) ===
+* Initial commit of code.

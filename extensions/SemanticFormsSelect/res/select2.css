@@ -25,14 +25,14 @@ span.select-sfs:after{
 }
 
 span.select-sfs select {
-    padding-top: 2px;
-    font-size: 95%;
+	padding-top: 2px;
+	font-size: 95%;
 	cursor: pointer;
 	outline: none;
 	-webkit-appearance: none;
 	-moz-appearance: none;
 	appearance: none;
-	display: block;
+	display: inline-block;
 	min-width: 450px !important;
 }
 

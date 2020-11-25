@@ -1,0 +1,160 @@
+.form-template-wrapper {
+
+  .sfFormContainer {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sfFieldRow {
+    padding-bottom: 40px;
+  }
+
+  .createboxInput,
+  .mandatoryField,
+  textarea,
+  .ve-area-wrapper.inputSpan {
+    border: 1px solid $te-boticelli !important;
+    background-color: rgba($te-homepage-background, 0.5);
+  }
+
+  .ve-ce-paragraphNode {
+    margin-bottom: 20px;
+  }
+
+  figure.ve-ce-mwBlockImageNode {
+    height: auto !important;
+    width: auto !important;
+
+    img {
+      height: auto !important;
+      width: auto !important;
+    }
+
+  }
+
+  .simple-tooltip {
+    border: none !important;
+  }
+
+}
+
+// Edit mode form input styling:
+// - Visual editor
+// - Other input fields
+// - Multi template for instruciton steps
+
+// Output of MediaWiki fields in Theme / Resource / Instruction detail pages
+.mw-field-value {
+  margin-bottom: 50px;
+}
+
+.multipleTemplateInstanceTable {
+  // When Visual editor is display in an actual table (i.e. matrix type setup used to create steps for an instruction),
+  // as opposed to only using display: table in regular implementations, border-collapse needs to be set explicitly
+  // This fixes the padding in the drop down values in the editor
+  border-collapse: separate;
+
+  .row {
+    margin-right: 0;
+  }
+
+  .sfFieldContent {
+    padding-right: 0;
+  }
+
+}
+
+.multipleTemplateInstance.multipleTemplate {
+  background-color: $te-white;
+}
+
+.pf-select2-dropdown {
+  .select2-results {
+    .select2-highlighted {
+      color: $te-blue;
+      background-color: $te-homepage-background !important;
+    }
+  }
+}
+
+.sfFormContainer {
+
+  .select2-drop.select2-drop-above.select2-drop-active {
+    border-color: $te-boticelli;
+  }
+
+  .select2-container-active .select2-choice,
+  .select2-container-active .select2-choices {
+    border-color: $te-boticelli !important;
+  }
+
+  .select2-container.select2-container-multi.createboxInput.pf-select2-container {
+    background-color: transparent !important;
+    border: none !important;
+  }
+
+  .select2-container .select2-choice {
+    background-image: none;
+    background-color: rgba($te-homepage-background, 0.5);
+    border-color: $te-boticelli;
+  }
+
+  .select2-container-multi .select2-choices {
+
+    background-image: none;
+    border-color: $te-boticelli;
+    background-color: rgba($te-homepage-background, 0.5);
+
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+
+    padding: 10px 10px 0 10px;
+
+
+    .select2-search-choice {
+      background-color: $te-white !important;
+      font-family: $te-font-regular;
+      font-size: rem-calc(15);
+      line-height: unitless-calc(18, 15);
+      color: $te-blue;
+      border: 1px solid $te-boticelli;
+      margin: 0 10px 10px 0 !important;
+      padding: 10px 20px 5px 30px;
+
+
+      .select2-search-choice-close {
+        left: 11px;
+        top: 9px;
+      }
+    }
+
+  }
+  .select2-container-multi .select2-choices .select2-search-field input {
+    background-image: url("data:image/svg+xml,%3Csvg width='9' height='9' viewBox='0 0 9 9' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.3834 5.5886v3.3628H3.3646V5.5886h-.0198v-.0018H0V3.568h3.3448V.2052h2.0188V3.568h.0198v.0018h3.3448v2.0188z' fill='%23567C83' fill-rule='nonzero'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-size: 9px !important;
+    background-position: left center !important;
+    padding-left: 18px !important;
+    margin-left: 12px !important;
+    cursor: pointer;
+    font-family: $te-font-regular;
+    color: $te-blue;
+
+    &.select-focused {
+      background-image: none !important;
+    }
+  }
+}
+
+#pfForm select, #pfForm input[type="checkbox"] {
+  min-height: 34px;
+}
+
+.simple-tooltip-img {
+  vertical-align: middle !important;
+}
+
+span.select-sfs {
+  max-width: 100%;
+}

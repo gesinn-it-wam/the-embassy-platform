@@ -1,0 +1,105 @@
+// Filter
+/*.drilldown-results p {
+  margin-bottom: 0 !important;
+  display: inline-block;
+}
+
+.drilldown-results .drilldown-filters + p{
+  display: none !important;
+}*/
+
+// Result page for Resources/Themes
+.ResourceList-count{
+  text-align: right;
+  justify-content: flex-end;
+  margin-bottom: 40px;
+  font-size: 1.125rem;
+}
+
+.ResourceBlock {
+  display: flex;
+  flex-flow: row wrap;
+  margin-right: 0;
+  padding: 35px 25px;
+  background-color: #fff;
+  position: relative;
+  margin-bottom: 15px;
+}
+
+.ResourceBlock-wrapper {
+  width: calc(66.66667% - 1.875rem);
+  margin-right: .9375rem;
+  margin-left: 16.66667%;
+}
+
+.ResourceBlock-type {
+  display: flex;
+  align-items: center;
+  padding-bottom: 15px;
+  font-family: regular-bold,Helvetica Neue,Arial,sans-serif;
+  color: #567c83;
+}
+
+.ResourceBlock-icon img {
+  width: 27px;
+  height: 18px;
+  margin-right: 10px;
+}
+
+.ResourceBlock-title {
+  display: inline-flex;
+  align-items: center;
+  padding-bottom: 10px;
+  font-size: 1.75rem;
+}
+
+.ResourceBlock-title span {
+  display: inline;
+  line-height: 2.5rem;
+}
+
+.ResourceBlock-authors {
+  padding-bottom: 25px;
+  font-size: 1.0625rem;
+  color: #567c83;
+  display: block !important;
+}
+
+.ResourceBlock-metadata{
+  flex-direction: row;
+  align-items: center;
+  display: flex;
+}
+
+.ResourceBlock-tags {
+  margin-right: 15px;
+  margin-left: -3px;
+  padding-bottom: 0;
+}
+.ResourceBlock-tags span{
+  margin: 3px;
+  padding: 11px 15px 9px;
+  display: block;
+  float: left;
+  font-size: .875rem;
+  color: #567c83;
+  border: 1px solid #bcd5da;
+}
+
+// Forms
+.select2-results li{
+  margin-bottom:3px !important;
+}
+
+
+// Related Resource
+.related-resource-navigation a {
+  margin-right: 20px;
+  color: $te-black !important;
+  text-decoration: underline !important;
+}
+
+strong, b{
+  font-family: $te-font-bold;
+  font-weight: bolder;
+}

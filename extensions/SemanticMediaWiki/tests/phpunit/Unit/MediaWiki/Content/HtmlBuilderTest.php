@@ -45,8 +45,14 @@ class HtmlBuilderTest extends \PHPUnit_Framework_TestCase {
 				'link' => 'Foo',
 				'description' => 'bar',
 				'schema-title' => '...',
+				'summary-title' => '...',
+				'schema_summary' => '...',
 				'error' => 'err---rr',
-				'error-title' => 'error'
+				'error-title' => 'error',
+				'usage_count' => 42,
+				'usage-title' => 'usage',
+				'usage' => '...',
+				'schema_body' => '...'
 			]
 		];
 

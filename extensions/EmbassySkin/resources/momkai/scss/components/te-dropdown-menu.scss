@@ -1,0 +1,133 @@
+.te-dropdown-menu {
+  display: none;
+  position: absolute;
+  background-color: $te-white;
+  right: 0;
+  transform: translateY(100%) translateX(-17px);
+  padding: 15px 20px;
+  outline: solid 2px $te-border-color;
+  min-width: 100px;
+  opacity: 0;
+  transition: all 100ms ease-in-out;
+  text-align: left;
+
+  font-size: rem-calc(16);
+  box-sizing: content-box;
+  z-index: 0;
+
+  &::after {
+    content: ' ';
+    position: absolute;
+    top: -10px;
+    right: 0;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 2px 0 10px 10px;
+    border-color: transparent transparent #ffffff transparent;
+    z-index: 2;
+  }
+
+  &::before {
+    content: ' ';
+    position: absolute;
+    top: -12px;
+    right: -2px;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0 0 12px 13px;
+    border-color: transparent transparent $te-border-color transparent;
+    z-index: 1;
+  }
+
+  & > * {
+    border-bottom: solid 1px $te-border-color;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+  }
+
+  a {
+    display: block;
+    color: $te-black;
+    white-space: nowrap;
+
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-right: 15px;
+
+    background-position: center right;
+    background-repeat: no-repeat;
+    background-size: 6px 9px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 6 9'%3E%3Cpath fill='%23000' fill-rule='nonzero' d='M1.6364 0L6 4.5 4.3636 6.1875 1.6364 9 0 7.3125 2.727 4.5 0 1.6875 1.6364 0z'/%3E%3C/svg%3E");
+
+    &:first-child {
+      margin-top: -10px;
+      //border-top: none;
+    }
+
+    &:last-child {
+      margin-bottom: -10px;
+    }
+  }
+
+  a[href].new,
+  a[href].external {
+    color: $te-black;
+  }
+
+}
+
+[data-dropdown-trigger].is-open {
+  outline: none;
+
+  .te-dropdown-menu {
+    display: block;
+    opacity: 1;
+  }
+}
+
+// Edit dropdown
+.smw-edit-dropdown {
+  flex: 0 0 auto;
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border: solid 2px $te-lightblue;
+  background: $te-lightblue;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 10px;
+
+  .te-dropdown-menu {
+    transform: translateY(120px) translateX(-17px);
+  }
+
+  &.is-open {
+    background: $te-white;
+    border: solid 2px $te-border-color;
+
+    &:hover {
+      background: $te-white;
+      border: solid 2px $te-border-color;
+    }
+
+  }
+
+  &:hover {
+    cursor: pointer;
+  }
+
+  a {
+    font-family: $te-font-bold;
+  }
+
+  svg {
+    width: 3px;
+    height: 13px;
+  }
+}

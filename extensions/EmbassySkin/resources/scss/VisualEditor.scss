@@ -1,0 +1,45 @@
+// Prevent overlapping
+// see: https://momkai.atlassian.net/browse/EMB-213
+.ve-ui-overlay-global{
+  z-index: 3 !important;
+}
+
+// avoid transform when scrolling
+.skin-chameleon .navbar.navbar-fixed-top ~ * .ve-ui-toolbar-floating > .oo-ui-toolbar-bar {
+  transform: translateY(0px);
+}
+
+// Fixes vertical-alignment issues with the toolbar buttons
+.ve-init-mw-desktopArticleTarget-toolbar, .ve-area-wrapper .oo-ui-toolbar-bar {
+  font-size: 1em !important;
+}
+
+.ve-init-mw-desktopArticleTarget-toolbar, .ve-init-mw-desktopArticleTarget-toolbarPlaceholder {
+  margin: 0 !important;
+}
+
+.oo-ui-barToolGroup > .oo-ui-toolGroup-tools > .oo-ui-tool > .oo-ui-tool-link {
+  height: auto !important;
+}
+.oo-ui-popupToolGroup-handle {
+  min-height: 44px !important;
+}
+
+.oo-ui-processDialog-location,
+.oo-ui-processDialog-title {
+  overflow: visible !important;
+}
+
+.ve-ui-toolbar .oo-ui-toolbar-bar {
+  box-shadow: none;
+}
+
+.ve-ui-tableLineContext-menu > .oo-ui-popupWidget-popup {
+  width: 200px !important;
+  overflow-x: hidden;
+}
+
+// Too low z-index for dropdown menu (Issue:2680)
+.ve-ui-toolbar > .oo-ui-toolbar-bar {
+  z-index: 99999;
+}
